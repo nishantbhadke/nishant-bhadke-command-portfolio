@@ -1,0 +1,8 @@
+node_modules/
+.next/
+out/
+.npm-cache/
+*.tsbuildinfo
+dev.out.log
+dev.err.log
+.env*.local
