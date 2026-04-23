@@ -2,12 +2,10 @@
 
 import { motion } from "framer-motion";
 import {
-  ArrowDownToLine,
   BriefcaseBusiness,
   ChevronLeft,
   ChevronRight,
   Command,
-  Github,
   Keyboard,
   Linkedin,
   Mail,
@@ -40,9 +38,9 @@ const starterHistory: OutputEntry[] = [
 ];
 
 const commandHelp = [
-  ["about", "scroll to the narrative introduction"],
+  ["about", "open the about surface"],
   ["projects", "open the featured project area"],
-  ["work", "jump to the delivery timeline"],
+  ["work", "open the experience surface"],
   ["skills", "show the technical stack"],
   ["resume", "download resume instantly"],
   ["contact", "open the guarded contact composer"],
@@ -53,6 +51,7 @@ const commandHelp = [
 ] as const;
 
 const keyboardRows = ["1234567890", "QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+const greetings = ["Hello", "Hola", "Ola", "Bonjour", "Ciao", "Namaste"];
 const portfolioRepo = "https://github.com/nishantbhadke/nishant-bhadke-command-portfolio";
 
 function normalize(value: string) {
@@ -78,10 +77,6 @@ function commandAlias(command: string) {
 }
 
 export function CommandPortfolio() {
-  const overviewRef = useRef<HTMLElement>(null);
-  const projectsRef = useRef<HTMLElement>(null);
-  const workRef = useRef<HTMLElement>(null);
-  const skillsRef = useRef<HTMLElement>(null);
   const contactRef = useRef<HTMLElement>(null);
   const commandInputRef = useRef<HTMLInputElement>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
@@ -107,31 +102,16 @@ export function CommandPortfolio() {
     setHistory((items) => [...items.slice(-5), { id: Date.now(), command, response }]);
   }
 
-  function sectionRef(section: SectionKey) {
-    switch (section) {
-      case "projects":
-        return projectsRef;
-      case "work":
-        return workRef;
-      case "skills":
-        return skillsRef;
-      case "contact":
-        return contactRef;
-      default:
-        return overviewRef;
-    }
-  }
-
   function activateSection(section: SectionKey, scroll = true) {
     startTransition(() => setActiveSection(section));
-    if (scroll) {
-      sectionRef(section).current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (section === "contact" && scroll) {
+      contactRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 
   function openProject(index: number, commandLabel?: string) {
     setProjectIndex(index);
-    activateSection("projects");
+    activateSection("projects", false);
     addHistory(commandLabel ?? projects[index].command, `Opened ${projects[index].title}.`);
   }
 
@@ -158,7 +138,7 @@ export function CommandPortfolio() {
       [group.group, group.items.join(" ")].join(" ").toLowerCase().includes(query)
     );
     if (skillMatch) {
-      activateSection("skills");
+      activateSection("skills", false);
       addHistory(`search ${query}`, `Found ${skillMatch.group}. Moved to the technical stack.`);
       return;
     }
@@ -167,7 +147,7 @@ export function CommandPortfolio() {
       [item.company, item.role, item.bullets.join(" ")].join(" ").toLowerCase().includes(query)
     );
     if (workMatch) {
-      activateSection("work");
+      activateSection("work", false);
       addHistory(`search ${query}`, `Matched ${workMatch.company}. Opening experience.`);
       return;
     }
@@ -176,7 +156,7 @@ export function CommandPortfolio() {
       .join(" ")
       .toLowerCase()
       .includes(query)) {
-      activateSection("overview");
+      activateSection("overview", false);
       addHistory(`search ${query}`, "Matched the profile narrative.");
       return;
     }
@@ -220,23 +200,23 @@ export function CommandPortfolio() {
 
     switch (command) {
       case "help":
-        activateSection("overview");
+        activateSection("overview", false);
         addHistory("help", `Available commands: ${commandHelp.map(([item]) => item).join(", ")}.`);
         break;
       case "about":
-        activateSection("overview");
+        activateSection("overview", false);
         addHistory("about", "Moved to the introduction.");
         break;
       case "projects":
-        activateSection("projects");
+        activateSection("projects", false);
         addHistory("projects", "Opened the project showcase.");
         break;
       case "work":
-        activateSection("work");
+        activateSection("work", false);
         addHistory("work", "Opened the delivery timeline.");
         break;
       case "skills":
-        activateSection("skills");
+        activateSection("skills", false);
         addHistory("skills", "Opened the technical stack.");
         break;
       case "resume":
@@ -335,39 +315,18 @@ export function CommandPortfolio() {
       <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(rgba(84,61,43,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(84,61,43,0.05)_1px,transparent_1px)] bg-[size:48px_48px]" />
 
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-        <nav className="sticky top-4 z-20 rounded-[2rem] border border-line/80 bg-card/88 px-4 py-3 shadow-soft backdrop-blur-xl">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <nav className="rounded-[2rem] border border-line/80 bg-card/88 px-4 py-3 shadow-soft backdrop-blur-xl">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-command text-accent">
                 <Command size={18} />
               </div>
               <div>
                 <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.24em] text-accent">Portfolio V2</p>
-                <p className="text-sm text-muted">Editorial design with command routing and safe outreach.</p>
+                <p className="text-sm text-muted">Command-first navigation with direct recruiter access.</p>
               </div>
             </div>
-
             <div className="flex flex-wrap gap-2">
-              {[
-                ["overview", "About"],
-                ["projects", "Projects"],
-                ["work", "Work"],
-                ["skills", "Skills"],
-                ["contact", "Contact"]
-              ].map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => activateSection(key as SectionKey)}
-                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    activeSection === key
-                      ? "border-accent bg-accent text-card"
-                      : "border-line bg-surface/80 text-muted hover:border-accent hover:text-accent"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
               <a
                 href={profile.resume}
                 download
@@ -375,44 +334,10 @@ export function CommandPortfolio() {
               >
                 Resume
               </a>
-            </div>
-          </div>
-        </nav>
-
-        <header ref={overviewRef} className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <motion.section
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="rounded-[2.2rem] border border-line bg-card/92 p-6 shadow-soft sm:p-8"
-          >
-            <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.28em] text-accent">{profile.role}</p>
-            <h1 className="mt-5 max-w-4xl font-display text-5xl leading-[0.96] tracking-[-0.04em] sm:text-6xl lg:text-[5.2rem]">
-              {profile.name}
-            </h1>
-            <p className="mt-4 max-w-3xl text-xl font-semibold leading-8 text-ink">
-              Backend engineer focused on BFSI workflows, secure APIs, caching, and production delivery.
-            </p>
-            <p className="mt-4 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <MetricCard label="Current role" value={profile.role} icon={<BriefcaseBusiness size={18} />} />
-              <MetricCard label="Location" value={profile.location} icon={<MapPin size={18} />} />
-              <MetricCard label="Specialty" value="BFSI backend delivery" icon={<Command size={18} />} />
-            </div>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href={profile.resume}
-                download
-                className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-bold text-card transition hover:brightness-95"
-              >
-                Download resume <ArrowDownToLine size={16} />
-              </a>
               <button
                 type="button"
                 onClick={() => activateSection("contact")}
-                className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-5 py-3 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent"
+                className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent"
               >
                 Contact
               </button>
@@ -420,24 +345,58 @@ export function CommandPortfolio() {
                 href={portfolioRepo}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-5 py-3 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent"
+                className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent"
               >
-                View repo <Github size={16} />
+                Repo
               </a>
+            </div>
+          </div>
+        </nav>
+
+        <header className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+          <motion.section
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="rounded-[2.2rem] border border-line bg-card/92 p-6 shadow-soft sm:p-8"
+          >
+            <div className="flex flex-wrap gap-2">
+              {greetings.map((item) => (
+                <span key={item} className="rounded-full border border-line bg-surface/88 px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-accent">
+                  {item}
+                </span>
+              ))}
+            </div>
+
+            <p className="mt-6 font-mono text-[0.72rem] font-bold uppercase tracking-[0.28em] text-accent">{profile.role}</p>
+            <h1 className="mt-4 max-w-4xl font-display text-5xl leading-[0.96] tracking-[-0.04em] sm:text-6xl">
+              I am {profile.name}
+            </h1>
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              <MetricCard label="Role" value={profile.role} icon={<BriefcaseBusiness size={18} />} />
+              <MetricCard label="Location" value={profile.location} icon={<MapPin size={18} />} />
+              <MetricCard label="Focus" value="BFSI backend delivery" icon={<Command size={18} />} />
+            </div>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              <SoftFact label="Worked across" value={profile.workedAcross.join(", ")} />
+              <SoftFact label="Recognition" value={recognition.certifications.concat(recognition.awards).join(", ")} />
             </div>
           </motion.section>
 
-          <div className="grid gap-6">
-            <motion.section
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-              className="rounded-[2rem] border border-line bg-command/90 p-6 shadow-soft"
-            >
+          <motion.section
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+            className="grid gap-6"
+          >
+            <article className="rounded-[2rem] border border-line bg-command/90 p-6 shadow-soft">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.24em] text-accent">Command router</p>
-                  <h2 className="mt-3 font-display text-3xl tracking-[-0.03em]">Ask the portfolio directly.</h2>
+                  <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.24em] text-accent">Command line</p>
+                  <h2 className="mt-3 font-display text-3xl tracking-[-0.03em]">Use commands instead of scrolling.</h2>
                 </div>
                 <Search size={18} className="mt-1 text-muted" />
               </div>
@@ -454,7 +413,7 @@ export function CommandPortfolio() {
                       runCommand();
                     }
                   }}
-                  placeholder="search redis"
+                  placeholder="about, projects, work, skills, search redis"
                   className="min-w-0 flex-1 bg-transparent font-mono text-sm text-ink outline-none placeholder:text-muted/70"
                   spellCheck={false}
                 />
@@ -467,191 +426,54 @@ export function CommandPortfolio() {
                 </button>
               </div>
 
-              <div className="mt-5 grid gap-3 rounded-[1.6rem] border border-line bg-card/70 p-4">
+              <div className="mt-4 flex flex-wrap gap-2">
+                {["about", "projects", "work", "skills", "resume", "contact"].map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => runCommand(item)}
+                    className="rounded-full border border-line bg-surface/88 px-3 py-2 font-mono text-xs font-bold uppercase tracking-[0.16em] text-muted transition hover:border-accent hover:text-accent"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </article>
+
+            <article className="rounded-[2rem] border border-line bg-card/92 p-6 shadow-soft">
+              <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">Live surface</p>
+                  <h2 className="mt-2 font-display text-4xl tracking-[-0.04em]">{surfaceTitle(activeSection)}</h2>
+                </div>
+                <p className="max-w-xl text-sm leading-6 text-muted">
+                  {surfaceDescription(activeSection)}
+                </p>
+              </div>
+              <div className="mt-6">
+                <SurfacePanel
+                  activeSection={activeSection}
+                  selectedProject={selectedProject}
+                  projectIndex={projectIndex}
+                  openProject={openProject}
+                  setProjectIndex={setProjectIndex}
+                />
+              </div>
+            </article>
+
+            <article className="rounded-[2rem] border border-line bg-card/88 p-5 shadow-soft">
+              <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-muted">Recent commands</p>
+              <div className="mt-4 grid gap-3">
                 {history.map((entry) => (
-                  <div key={entry.id} className="font-mono text-xs leading-6 text-muted">
+                  <div key={entry.id} className="rounded-[1.2rem] border border-line bg-surface/78 p-4 font-mono text-xs leading-6 text-muted">
                     <p className="text-accent">{entry.command}</p>
                     <p>{entry.response}</p>
                   </div>
                 ))}
               </div>
-            </motion.section>
-          </div>
+            </article>
+          </motion.section>
         </header>
-
-        <section>
-          <SectionShell
-            title="About me"
-            eyebrow="Narrative"
-            description="The first screen keeps the essentials visible: role, resume access, direct contact, and the type of backend work delivered in production."
-          >
-            <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-              <div>
-                <p className="text-base leading-8 text-muted">
-                  Nishant works at the overlap of backend delivery, BFSI workflow rigor, and production pragmatism. He ships APIs, secure integrations, query-tuned data access, and maker-checker flows that survive real operational pressure.
-                </p>
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  <SoftFact label="Core stack" value=".NET Core, SQL Server, Redis, Docker, AWS" />
-                  <SoftFact label="Preferred problems" value="Banking workflows, secure integrations, performance tuning" />
-                  <SoftFact label="Operating mode" value="Delivery-focused, compliance-aware, metrics-driven" />
-                  <SoftFact label="Recent focus" value="Loan journeys, document pipelines, API reliability" />
-                </div>
-              </div>
-              <div className="rounded-[1.5rem] border border-line bg-surface/88 p-5">
-                <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">Worked across</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {profile.workedAcross.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => runSearch(item)}
-                      className="rounded-full border border-line bg-card px-3 py-2 text-sm font-semibold text-muted transition hover:border-accent hover:text-accent"
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {recognition.certifications.concat(recognition.awards).map((item) => (
-                    <span key={item} className="rounded-full border border-line bg-command/70 px-3 py-2 text-sm font-semibold text-muted">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </SectionShell>
-        </section>
-
-        <section ref={projectsRef} className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
-          <SectionShell
-            title="Project spotlight"
-            eyebrow="Projects"
-            description="The featured card reads like a concise case study, while the selector on the right keeps the command-portfolio behavior alive."
-          >
-            <div className="rounded-[1.8rem] border border-line bg-surface/90 p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.24em] text-accent">{selectedProject.label}</p>
-                  <h2 className="mt-3 font-display text-4xl leading-tight tracking-[-0.04em]">{selectedProject.title}</h2>
-                  <p className="mt-3 font-mono text-xs uppercase tracking-[0.18em] text-muted">{selectedProject.duration}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setProjectIndex((index) => (index - 1 + projects.length) % projects.length)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-line bg-card transition hover:border-accent hover:text-accent"
-                    aria-label="Previous project"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setProjectIndex((index) => (index + 1) % projects.length)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-line bg-card transition hover:border-accent hover:text-accent"
-                    aria-label="Next project"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-              </div>
-
-              <p className="mt-5 text-base leading-8 text-muted">{selectedProject.summary}</p>
-              <div className="mt-5 rounded-[1.4rem] border border-line bg-card/85 p-4">
-                <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-muted">Impact</p>
-                <p className="mt-3 text-base font-semibold leading-7">{selectedProject.impact}</p>
-              </div>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {selectedProject.tech.map((item) => (
-                  <span key={item} className="rounded-full border border-line bg-command/70 px-3 py-2 text-sm font-semibold text-muted">
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </SectionShell>
-
-          <SectionShell
-            title="Project index"
-            eyebrow="Selector"
-            description="Choose a project directly or via commands like rbl-bcms, radc, or search redis."
-          >
-            <div className="grid gap-3">
-              {projects.map((project, index) => (
-                <button
-                  key={project.id}
-                  type="button"
-                  onClick={() => openProject(index)}
-                  className={`rounded-[1.5rem] border p-4 text-left transition ${
-                    index === projectIndex
-                      ? "border-accent bg-accent text-card"
-                      : "border-line bg-surface/85 text-muted hover:border-accent hover:text-accent"
-                  }`}
-                >
-                  <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.2em]">{project.label}</p>
-                  <p className="mt-2 text-base font-semibold leading-6">{project.title}</p>
-                  <p className="mt-2 text-sm leading-6 opacity-90">{project.summary}</p>
-                </button>
-              ))}
-            </div>
-          </SectionShell>
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-          <section ref={workRef}>
-            <SectionShell
-              title="Experience"
-              eyebrow="Delivery timeline"
-              description="The work section stays concrete about outcomes, performance, security, and banking workflows."
-            >
-              <div className="grid gap-4">
-                {work.map((item) => (
-                  <article key={item.company} className="rounded-[1.6rem] border border-line bg-surface/88 p-5">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <h3 className="font-display text-3xl tracking-[-0.03em]">{item.role}</h3>
-                        <p className="mt-2 text-sm font-semibold uppercase tracking-[0.16em] text-muted">{item.company}</p>
-                      </div>
-                      <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted">{item.period}</p>
-                    </div>
-                    <div className="mt-5 grid gap-3">
-                      {item.bullets.map((bullet) => (
-                        <div key={bullet} className="rounded-[1.2rem] border border-line bg-card/70 px-4 py-3 text-sm leading-7 text-muted">
-                          {bullet}
-                        </div>
-                      ))}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </SectionShell>
-          </section>
-
-          <div className="grid gap-6">
-            <section ref={skillsRef}>
-              <SectionShell
-                title="Technical stack"
-                eyebrow="Skills"
-                description="Grouped by delivery shape so the reader sees how the stack maps to backend work."
-              >
-                <div className="grid gap-3">
-                  {skills.map((group) => (
-                    <article key={group.group} className="rounded-[1.5rem] border border-line bg-surface/88 p-4">
-                      <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">{group.group}</p>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {group.items.map((item) => (
-                          <span key={item} className="rounded-full border border-line bg-card px-3 py-2 text-sm font-semibold text-muted">
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </SectionShell>
-            </section>
-          </div>
-        </section>
 
         <section ref={contactRef}>
           <SectionShell
@@ -832,6 +654,203 @@ function SectionShell({
       </div>
       <div className="mt-6">{children}</div>
     </motion.section>
+  );
+}
+
+function surfaceTitle(activeSection: SectionKey) {
+  switch (activeSection) {
+    case "projects":
+      return "Projects";
+    case "work":
+      return "Experience";
+    case "skills":
+      return "Technical stack";
+    case "contact":
+      return "Contact";
+    default:
+      return "About";
+  }
+}
+
+function surfaceDescription(activeSection: SectionKey) {
+  switch (activeSection) {
+    case "projects":
+      return "Use project commands or the selector below to switch between banking and backend case studies.";
+    case "work":
+      return "The work view keeps the timeline concise and outcome-oriented.";
+    case "skills":
+      return "The stack is grouped around backend delivery instead of long scrolling sections.";
+    case "contact":
+      return "Contact lives below unchanged, but the command can still take the user there directly.";
+    default:
+      return "The command line controls this surface, so visitors can move through the portfolio without scrolling through multiple sections.";
+  }
+}
+
+function SurfacePanel({
+  activeSection,
+  selectedProject,
+  projectIndex,
+  openProject,
+  setProjectIndex
+}: {
+  activeSection: SectionKey;
+  selectedProject: (typeof projects)[number];
+  projectIndex: number;
+  openProject: (index: number, commandLabel?: string) => void;
+  setProjectIndex: React.Dispatch<React.SetStateAction<number>>;
+}) {
+  if (activeSection === "projects") {
+    return (
+      <div className="grid gap-4">
+        <article className="rounded-[1.6rem] border border-line bg-surface/90 p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">{selectedProject.label}</p>
+              <h3 className="mt-3 font-display text-3xl leading-tight tracking-[-0.04em]">{selectedProject.title}</h3>
+              <p className="mt-2 font-mono text-xs uppercase tracking-[0.18em] text-muted">{selectedProject.duration}</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setProjectIndex((index) => (index - 1 + projects.length) % projects.length)}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-line bg-card transition hover:border-accent hover:text-accent"
+                aria-label="Previous project"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setProjectIndex((index) => (index + 1) % projects.length)}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-line bg-card transition hover:border-accent hover:text-accent"
+                aria-label="Next project"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+          <p className="mt-5 text-base leading-8 text-muted">{selectedProject.summary}</p>
+          <div className="mt-5 rounded-[1.2rem] border border-line bg-card/75 p-4">
+            <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.2em] text-muted">Impact</p>
+            <p className="mt-3 text-base font-semibold leading-7">{selectedProject.impact}</p>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {selectedProject.tech.map((item) => (
+              <span key={item} className="rounded-full border border-line bg-command/70 px-3 py-2 text-sm font-semibold text-muted">
+                {item}
+              </span>
+            ))}
+          </div>
+        </article>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          {projects.map((project, index) => (
+            <button
+              key={project.id}
+              type="button"
+              onClick={() => openProject(index)}
+              className={`rounded-[1.3rem] border p-4 text-left transition ${
+                index === projectIndex
+                  ? "border-accent bg-accent text-card"
+                  : "border-line bg-surface/85 text-muted hover:border-accent hover:text-accent"
+              }`}
+            >
+              <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.18em]">{project.label}</p>
+              <p className="mt-2 text-base font-semibold leading-6">{project.title}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (activeSection === "work") {
+    return (
+      <div className="grid gap-4">
+        {work.map((item) => (
+          <article key={item.company} className="rounded-[1.6rem] border border-line bg-surface/88 p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="font-display text-3xl tracking-[-0.03em]">{item.role}</h3>
+                <p className="mt-2 text-sm font-semibold uppercase tracking-[0.16em] text-muted">{item.company}</p>
+              </div>
+              <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted">{item.period}</p>
+            </div>
+            <div className="mt-5 grid gap-3">
+              {item.bullets.map((bullet) => (
+                <div key={bullet} className="rounded-[1.2rem] border border-line bg-card/70 px-4 py-3 text-sm leading-7 text-muted">
+                  {bullet}
+                </div>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    );
+  }
+
+  if (activeSection === "skills") {
+    return (
+      <div className="grid gap-3 md:grid-cols-2">
+        {skills.map((group) => (
+          <article key={group.group} className="rounded-[1.4rem] border border-line bg-surface/88 p-4">
+            <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">{group.group}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {group.items.map((item) => (
+                <span key={item} className="rounded-full border border-line bg-card px-3 py-2 text-sm font-semibold text-muted">
+                  {item}
+                </span>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    );
+  }
+
+  if (activeSection === "contact") {
+    return (
+      <div className="rounded-[1.5rem] border border-line bg-surface/88 p-5">
+        <p className="text-base leading-8 text-muted">
+          The command line can jump to contact instantly. The guarded email composer stays below exactly as the working contact flow.
+        </p>
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <ContactCard label="Email" value={profile.email} href={`mailto:${profile.email}`} icon={<Mail size={16} />} />
+          <ContactCard label="Phone" value={profile.phone} href={`tel:${profile.phone.replace(/\s/g, "")}`} icon={<Phone size={16} />} />
+          <ContactCard label="LinkedIn" value="nishant-bhadke-983837185" href={profile.linkedin} icon={<Linkedin size={16} />} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+      <article className="rounded-[1.6rem] border border-line bg-surface/88 p-5">
+        <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">About me</p>
+        <h3 className="mt-3 font-display text-3xl tracking-[-0.03em]">{profile.name}</h3>
+        <p className="mt-4 text-base leading-8 text-muted">
+          Nishant works at the overlap of backend delivery, BFSI workflow rigor, and production pragmatism. He ships APIs, secure integrations, query-tuned data access, and maker-checker flows that survive real operational pressure.
+        </p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <SoftFact label="Core stack" value=".NET Core, SQL Server, Redis, Docker, AWS" />
+          <SoftFact label="Preferred problems" value="Banking workflows, secure integrations, performance tuning" />
+          <SoftFact label="Operating mode" value="Delivery-focused, compliance-aware, metrics-driven" />
+          <SoftFact label="Recent focus" value="Loan journeys, document pipelines, API reliability" />
+        </div>
+      </article>
+
+      <article className="rounded-[1.6rem] border border-line bg-surface/88 p-5">
+        <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">Suggested commands</p>
+        <div className="mt-4 grid gap-3">
+          {commandHelp.slice(0, 6).map(([command, label]) => (
+            <div key={command} className="rounded-[1.2rem] border border-line bg-card/70 px-4 py-3">
+              <p className="font-mono text-sm font-bold text-accent">{command}</p>
+              <p className="mt-1 text-sm leading-6 text-muted">{label}</p>
+            </div>
+          ))}
+        </div>
+      </article>
+    </div>
   );
 }
 
