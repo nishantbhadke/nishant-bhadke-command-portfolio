@@ -353,36 +353,103 @@ export function CommandPortfolio() {
           </div>
         </nav>
 
-        <header className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <header className="grid gap-6">
           <motion.section
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="rounded-[2.2rem] border border-line bg-card/92 p-6 shadow-soft sm:p-8"
           >
-            <div className="flex flex-wrap gap-2">
-              {greetings.map((item) => (
-                <span key={item} className="rounded-full border border-line bg-surface/88 px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-accent">
-                  {item}
-                </span>
-              ))}
-            </div>
+            <div className="grid gap-8 xl:grid-cols-[0.92fr_1.08fr]">
+              <div>
+                <div className="flex flex-wrap gap-2">
+                  {greetings.map((item) => (
+                    <span key={item} className="rounded-full border border-line bg-surface/88 px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-accent">
+                      {item}
+                    </span>
+                  ))}
+                </div>
 
-            <p className="mt-6 font-mono text-[0.72rem] font-bold uppercase tracking-[0.28em] text-accent">{profile.role}</p>
-            <h1 className="mt-4 max-w-4xl font-display text-5xl leading-[0.96] tracking-[-0.04em] sm:text-6xl">
-              I am {profile.name}
-            </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
+                <p className="mt-6 font-mono text-[0.72rem] font-bold uppercase tracking-[0.28em] text-accent">{profile.role}</p>
+                <h1 className="mt-4 max-w-4xl font-display text-5xl leading-[0.96] tracking-[-0.04em] sm:text-6xl">
+                  I am {profile.name}
+                </h1>
+                <p className="mt-5 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <MetricCard label="Role" value={profile.role} icon={<BriefcaseBusiness size={18} />} />
-              <MetricCard label="Location" value={profile.location} icon={<MapPin size={18} />} />
-              <MetricCard label="Focus" value="BFSI backend delivery" icon={<Command size={18} />} />
-            </div>
+                <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                  <MetricCard label="Role" value={profile.role} icon={<BriefcaseBusiness size={18} />} />
+                  <MetricCard label="Location" value={profile.location} icon={<MapPin size={18} />} />
+                  <MetricCard label="Focus" value="BFSI backend delivery" icon={<Command size={18} />} />
+                </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <SoftFact label="Worked across" value={profile.workedAcross.join(", ")} />
-              <SoftFact label="Recognition" value={recognition.certifications.concat(recognition.awards).join(", ")} />
+                <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                  <SoftFact label="Worked across" value={profile.workedAcross.join(", ")} />
+                  <SoftFact label="Recognition" value={recognition.certifications.concat(recognition.awards).join(", ")} />
+                </div>
+              </div>
+
+              <div className="rounded-[1.8rem] border border-line bg-command/85 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.24em] text-accent">Command line</p>
+                    <h2 className="mt-3 font-display text-3xl tracking-[-0.03em]">Navigate the portfolio here.</h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+                      Use commands to open about, projects, work, skills, resume, or contact without hunting through sections.
+                    </p>
+                  </div>
+                  <Search size={18} className="mt-1 text-muted" />
+                </div>
+
+                <div className="mt-5 flex items-center gap-3 rounded-[1.4rem] border border-line bg-card px-4 py-3">
+                  <span className="font-mono text-accent">&gt;</span>
+                  <input
+                    ref={commandInputRef}
+                    value={input}
+                    onChange={(event) => setInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        runCommand();
+                      }
+                    }}
+                    placeholder="about, projects, work, skills, search redis"
+                    className="min-w-0 flex-1 bg-transparent font-mono text-sm text-ink outline-none placeholder:text-muted/70"
+                    spellCheck={false}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => runCommand()}
+                    className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-bold text-card transition hover:brightness-95"
+                  >
+                    Run <Send size={14} />
+                  </button>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {["about", "projects", "work", "skills", "resume", "contact"].map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => runCommand(item)}
+                      className="rounded-full border border-line bg-surface/88 px-3 py-2 font-mono text-xs font-bold uppercase tracking-[0.16em] text-muted transition hover:border-accent hover:text-accent"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-5 rounded-[1.4rem] border border-line bg-card/80 p-4">
+                  <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.18em] text-muted">Recent commands</p>
+                  <div className="mt-3 grid gap-3">
+                    {history.map((entry) => (
+                      <div key={entry.id} className="rounded-[1rem] border border-line bg-surface/78 px-3 py-3 font-mono text-xs leading-6 text-muted">
+                        <p className="text-accent">{entry.command}</p>
+                        <p>{entry.response}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.section>
 
@@ -390,88 +457,26 @@ export function CommandPortfolio() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-            className="grid gap-6"
+            className="rounded-[2rem] border border-line bg-card/92 p-6 shadow-soft"
           >
-            <article className="rounded-[2rem] border border-line bg-command/90 p-6 shadow-soft">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.24em] text-accent">Command line</p>
-                  <h2 className="mt-3 font-display text-3xl tracking-[-0.03em]">Use commands instead of scrolling.</h2>
-                </div>
-                <Search size={18} className="mt-1 text-muted" />
+            <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">Live surface</p>
+                <h2 className="mt-2 font-display text-4xl tracking-[-0.04em]">{surfaceTitle(activeSection)}</h2>
               </div>
-
-              <div className="mt-5 flex items-center gap-3 rounded-[1.4rem] border border-line bg-card px-4 py-3">
-                <span className="font-mono text-accent">&gt;</span>
-                <input
-                  ref={commandInputRef}
-                  value={input}
-                  onChange={(event) => setInput(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      runCommand();
-                    }
-                  }}
-                  placeholder="about, projects, work, skills, search redis"
-                  className="min-w-0 flex-1 bg-transparent font-mono text-sm text-ink outline-none placeholder:text-muted/70"
-                  spellCheck={false}
-                />
-                <button
-                  type="button"
-                  onClick={() => runCommand()}
-                  className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-bold text-card transition hover:brightness-95"
-                >
-                  Run <Send size={14} />
-                </button>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {["about", "projects", "work", "skills", "resume", "contact"].map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => runCommand(item)}
-                    className="rounded-full border border-line bg-surface/88 px-3 py-2 font-mono text-xs font-bold uppercase tracking-[0.16em] text-muted transition hover:border-accent hover:text-accent"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </article>
-
-            <article className="rounded-[2rem] border border-line bg-card/92 p-6 shadow-soft">
-              <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">Live surface</p>
-                  <h2 className="mt-2 font-display text-4xl tracking-[-0.04em]">{surfaceTitle(activeSection)}</h2>
-                </div>
-                <p className="max-w-xl text-sm leading-6 text-muted">
-                  {surfaceDescription(activeSection)}
-                </p>
-              </div>
-              <div className="mt-6">
-                <SurfacePanel
-                  activeSection={activeSection}
-                  selectedProject={selectedProject}
-                  projectIndex={projectIndex}
-                  openProject={openProject}
-                  setProjectIndex={setProjectIndex}
-                />
-              </div>
-            </article>
-
-            <article className="rounded-[2rem] border border-line bg-card/88 p-5 shadow-soft">
-              <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-muted">Recent commands</p>
-              <div className="mt-4 grid gap-3">
-                {history.map((entry) => (
-                  <div key={entry.id} className="rounded-[1.2rem] border border-line bg-surface/78 p-4 font-mono text-xs leading-6 text-muted">
-                    <p className="text-accent">{entry.command}</p>
-                    <p>{entry.response}</p>
-                  </div>
-                ))}
-              </div>
-            </article>
+              <p className="max-w-xl text-sm leading-6 text-muted">
+                {surfaceDescription(activeSection)}
+              </p>
+            </div>
+            <div className="mt-6">
+              <SurfacePanel
+                activeSection={activeSection}
+                selectedProject={selectedProject}
+                projectIndex={projectIndex}
+                openProject={openProject}
+                setProjectIndex={setProjectIndex}
+              />
+            </div>
           </motion.section>
         </header>
 
