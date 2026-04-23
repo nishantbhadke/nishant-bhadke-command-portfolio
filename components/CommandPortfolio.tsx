@@ -353,36 +353,103 @@ export function CommandPortfolio() {
           </div>
         </nav>
 
-        <header className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <header className="grid gap-6">
           <motion.section
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="rounded-[2.2rem] border border-line bg-card/92 p-6 shadow-soft sm:p-8"
           >
-            <div className="flex flex-wrap gap-2">
-              {greetings.map((item) => (
-                <span key={item} className="rounded-full border border-line bg-surface/88 px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-accent">
-                  {item}
-                </span>
-              ))}
-            </div>
+            <div className="grid gap-8 xl:grid-cols-[0.92fr_1.08fr]">
+              <div>
+                <div className="flex flex-wrap gap-2">
+                  {greetings.map((item) => (
+                    <span key={item} className="rounded-full border border-line bg-surface/88 px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-accent">
+                      {item}
+                    </span>
+                  ))}
+                </div>
 
-            <p className="mt-6 font-mono text-[0.72rem] font-bold uppercase tracking-[0.28em] text-accent">{profile.role}</p>
-            <h1 className="mt-4 max-w-4xl font-display text-5xl leading-[0.96] tracking-[-0.04em] sm:text-6xl">
-              I am {profile.name}
-            </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
+                <p className="mt-6 font-mono text-[0.72rem] font-bold uppercase tracking-[0.28em] text-accent">{profile.role}</p>
+                <h1 className="mt-4 max-w-4xl font-display text-5xl leading-[0.96] tracking-[-0.04em] sm:text-6xl">
+                  I am {profile.name}
+                </h1>
+                <p className="mt-5 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <MetricCard label="Role" value={profile.role} icon={<BriefcaseBusiness size={18} />} />
-              <MetricCard label="Location" value={profile.location} icon={<MapPin size={18} />} />
-              <MetricCard label="Focus" value="BFSI backend delivery" icon={<Command size={18} />} />
-            </div>
+                <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                  <MetricCard label="Role" value={profile.role} icon={<BriefcaseBusiness size={18} />} />
+                  <MetricCard label="Location" value={profile.location} icon={<MapPin size={18} />} />
+                  <MetricCard label="Focus" value="BFSI backend delivery" icon={<Command size={18} />} />
+                </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <SoftFact label="Worked across" value={profile.workedAcross.join(", ")} />
-              <SoftFact label="Recognition" value={recognition.certifications.concat(recognition.awards).join(", ")} />
+                <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                  <SoftFact label="Worked across" value={profile.workedAcross.join(", ")} />
+                  <SoftFact label="Recognition" value={recognition.certifications.concat(recognition.awards).join(", ")} />
+                </div>
+              </div>
+
+              <div className="rounded-[1.8rem] border border-line bg-command/85 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.24em] text-accent">Command line</p>
+                    <h2 className="mt-3 font-display text-3xl tracking-[-0.03em]">Navigate the portfolio here.</h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+                      Use commands to open about, projects, work, skills, resume, or contact without hunting through sections.
+                    </p>
+                  </div>
+                  <Search size={18} className="mt-1 text-muted" />
+                </div>
+
+                <div className="mt-5 flex items-center gap-3 rounded-[1.4rem] border border-line bg-card px-4 py-3">
+                  <span className="font-mono text-accent">&gt;</span>
+                  <input
+                    ref={commandInputRef}
+                    value={input}
+                    onChange={(event) => setInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        runCommand();
+                      }
+                    }}
+                    placeholder="about, projects, work, skills, search redis"
+                    className="min-w-0 flex-1 bg-transparent font-mono text-sm text-ink outline-none placeholder:text-muted/70"
+                    spellCheck={false}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => runCommand()}
+                    className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-bold text-card transition hover:brightness-95"
+                  >
+                    Run <Send size={14} />
+                  </button>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {["about", "projects", "work", "skills", "resume", "contact"].map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => runCommand(item)}
+                      className="rounded-full border border-line bg-surface/88 px-3 py-2 font-mono text-xs font-bold uppercase tracking-[0.16em] text-muted transition hover:border-accent hover:text-accent"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-5 rounded-[1.4rem] border border-line bg-card/80 p-4">
+                  <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.18em] text-muted">Recent commands</p>
+                  <div className="mt-3 grid gap-3">
+                    {history.map((entry) => (
+                      <div key={entry.id} className="rounded-[1rem] border border-line bg-surface/78 px-3 py-3 font-mono text-xs leading-6 text-muted">
+                        <p className="text-accent">{entry.command}</p>
+                        <p>{entry.response}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.section>
 
@@ -390,88 +457,26 @@ export function CommandPortfolio() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-            className="grid gap-6"
+            className="rounded-[2rem] border border-line bg-card/92 p-6 shadow-soft"
           >
-            <article className="rounded-[2rem] border border-line bg-command/90 p-6 shadow-soft">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.24em] text-accent">Command line</p>
-                  <h2 className="mt-3 font-display text-3xl tracking-[-0.03em]">Use commands instead of scrolling.</h2>
-                </div>
-                <Search size={18} className="mt-1 text-muted" />
+            <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">Live surface</p>
+                <h2 className="mt-2 font-display text-4xl tracking-[-0.04em]">{surfaceTitle(activeSection)}</h2>
               </div>
-
-              <div className="mt-5 flex items-center gap-3 rounded-[1.4rem] border border-line bg-card px-4 py-3">
-                <span className="font-mono text-accent">&gt;</span>
-                <input
-                  ref={commandInputRef}
-                  value={input}
-                  onChange={(event) => setInput(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      runCommand();
-                    }
-                  }}
-                  placeholder="about, projects, work, skills, search redis"
-                  className="min-w-0 flex-1 bg-transparent font-mono text-sm text-ink outline-none placeholder:text-muted/70"
-                  spellCheck={false}
-                />
-                <button
-                  type="button"
-                  onClick={() => runCommand()}
-                  className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-bold text-card transition hover:brightness-95"
-                >
-                  Run <Send size={14} />
-                </button>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {["about", "projects", "work", "skills", "resume", "contact"].map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => runCommand(item)}
-                    className="rounded-full border border-line bg-surface/88 px-3 py-2 font-mono text-xs font-bold uppercase tracking-[0.16em] text-muted transition hover:border-accent hover:text-accent"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </article>
-
-            <article className="rounded-[2rem] border border-line bg-card/92 p-6 shadow-soft">
-              <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">Live surface</p>
-                  <h2 className="mt-2 font-display text-4xl tracking-[-0.04em]">{surfaceTitle(activeSection)}</h2>
-                </div>
-                <p className="max-w-xl text-sm leading-6 text-muted">
-                  {surfaceDescription(activeSection)}
-                </p>
-              </div>
-              <div className="mt-6">
-                <SurfacePanel
-                  activeSection={activeSection}
-                  selectedProject={selectedProject}
-                  projectIndex={projectIndex}
-                  openProject={openProject}
-                  setProjectIndex={setProjectIndex}
-                />
-              </div>
-            </article>
-
-            <article className="rounded-[2rem] border border-line bg-card/88 p-5 shadow-soft">
-              <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-muted">Recent commands</p>
-              <div className="mt-4 grid gap-3">
-                {history.map((entry) => (
-                  <div key={entry.id} className="rounded-[1.2rem] border border-line bg-surface/78 p-4 font-mono text-xs leading-6 text-muted">
-                    <p className="text-accent">{entry.command}</p>
-                    <p>{entry.response}</p>
-                  </div>
-                ))}
-              </div>
-            </article>
+              <p className="max-w-xl text-sm leading-6 text-muted">
+                {surfaceDescription(activeSection)}
+              </p>
+            </div>
+            <div className="mt-6">
+              <SurfacePanel
+                activeSection={activeSection}
+                selectedProject={selectedProject}
+                projectIndex={projectIndex}
+                openProject={openProject}
+                setProjectIndex={setProjectIndex}
+              />
+            </div>
           </motion.section>
         </header>
 
@@ -660,9 +665,9 @@ function SectionShell({
 function surfaceTitle(activeSection: SectionKey) {
   switch (activeSection) {
     case "projects":
-      return "Projects";
+      return "Projects and experience";
     case "work":
-      return "Experience";
+      return "Projects and experience";
     case "skills":
       return "Technical stack";
     case "contact":
@@ -675,9 +680,9 @@ function surfaceTitle(activeSection: SectionKey) {
 function surfaceDescription(activeSection: SectionKey) {
   switch (activeSection) {
     case "projects":
-      return "Use project commands or the selector below to switch between banking and backend case studies.";
+      return "Project detail and delivery experience stay in one place so the reader doesn’t bounce between separate cards.";
     case "work":
-      return "The work view keeps the timeline concise and outcome-oriented.";
+      return "Project detail and delivery experience stay in one place so the reader doesn’t bounce between separate cards.";
     case "skills":
       return "The stack is grouped around backend delivery instead of long scrolling sections.";
     case "contact":
@@ -700,7 +705,7 @@ function SurfacePanel({
   openProject: (index: number, commandLabel?: string) => void;
   setProjectIndex: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  if (activeSection === "projects") {
+  if (activeSection === "projects" || activeSection === "work") {
     return (
       <div className="grid gap-4">
         <article className="rounded-[1.6rem] border border-line bg-surface/90 p-5">
@@ -743,48 +748,51 @@ function SurfacePanel({
           </div>
         </article>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          {projects.map((project, index) => (
-            <button
-              key={project.id}
-              type="button"
-              onClick={() => openProject(index)}
-              className={`rounded-[1.3rem] border p-4 text-left transition ${
-                index === projectIndex
-                  ? "border-accent bg-accent text-card"
-                  : "border-line bg-surface/85 text-muted hover:border-accent hover:text-accent"
-              }`}
-            >
-              <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.18em]">{project.label}</p>
-              <p className="mt-2 text-base font-semibold leading-6">{project.title}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (activeSection === "work") {
-    return (
-      <div className="grid gap-4">
-        {work.map((item) => (
-          <article key={item.company} className="rounded-[1.6rem] border border-line bg-surface/88 p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h3 className="font-display text-3xl tracking-[-0.03em]">{item.role}</h3>
-                <p className="mt-2 text-sm font-semibold uppercase tracking-[0.16em] text-muted">{item.company}</p>
-              </div>
-              <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted">{item.period}</p>
+        <article className="rounded-[1.6rem] border border-line bg-surface/88 p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">Experience</p>
+              <h3 className="mt-2 font-display text-3xl tracking-[-0.03em]">Delivery timeline</h3>
             </div>
-            <div className="mt-5 grid gap-3">
-              {item.bullets.map((bullet) => (
-                <div key={bullet} className="rounded-[1.2rem] border border-line bg-card/70 px-4 py-3 text-sm leading-7 text-muted">
-                  {bullet}
-                </div>
+            <div className="flex flex-wrap gap-2">
+              {projects.map((project, index) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  onClick={() => openProject(index)}
+                  className={`rounded-full border px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] transition ${
+                    index === projectIndex
+                      ? "border-accent bg-accent text-card"
+                      : "border-line bg-card text-muted hover:border-accent hover:text-accent"
+                  }`}
+                >
+                  {project.label}
+                </button>
               ))}
             </div>
-          </article>
-        ))}
+          </div>
+
+          <div className="mt-5 grid gap-4">
+            {work.map((item) => (
+              <div key={item.company} className="rounded-[1.2rem] border border-line bg-card/70 p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-lg font-semibold">{item.role}</p>
+                    <p className="mt-1 text-sm font-semibold uppercase tracking-[0.14em] text-muted">{item.company}</p>
+                  </div>
+                  <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted">{item.period}</p>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  {item.bullets.map((bullet) => (
+                    <p key={bullet} className="rounded-[1rem] bg-surface/80 px-3 py-2 text-sm leading-6 text-muted">
+                      {bullet}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </article>
       </div>
     );
   }
