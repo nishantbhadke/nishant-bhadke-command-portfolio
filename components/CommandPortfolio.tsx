@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import {
   ArrowDownToLine,
-  ArrowRight,
   BriefcaseBusiness,
   ChevronLeft,
   ChevronRight,
@@ -17,11 +16,10 @@ import {
   Search,
   Send,
   ShieldAlert,
-  ShieldCheck,
-  Sparkles
+  ShieldCheck
 } from "lucide-react";
 import { KeyboardEvent, startTransition, useDeferredValue, useRef, useState } from "react";
-import { education, profile, projects, recognition, skills, work } from "@/lib/profile";
+import { profile, projects, recognition, skills, work } from "@/lib/profile";
 import { analyzeContactDraft, OFFENSIVE_THRESHOLD } from "@/lib/messageSafety";
 
 type OutputEntry = {
@@ -30,7 +28,7 @@ type OutputEntry = {
   response: string;
 };
 
-type SectionKey = "overview" | "projects" | "work" | "skills" | "resume" | "contact";
+type SectionKey = "overview" | "projects" | "work" | "skills" | "contact";
 type ComposerField = "name" | "email" | "subject" | "message";
 
 const starterHistory: OutputEntry[] = [
@@ -46,7 +44,7 @@ const commandHelp = [
   ["projects", "open the featured project area"],
   ["work", "jump to the delivery timeline"],
   ["skills", "show the technical stack"],
-  ["resume", "open resume and education"],
+  ["resume", "download resume instantly"],
   ["contact", "open the guarded contact composer"],
   ["search <term>", "find a project, bank, or skill keyword"],
   ["rbl-bcms", "focus the BCMS engagement"],
@@ -84,7 +82,6 @@ export function CommandPortfolio() {
   const projectsRef = useRef<HTMLElement>(null);
   const workRef = useRef<HTMLElement>(null);
   const skillsRef = useRef<HTMLElement>(null);
-  const resumeRef = useRef<HTMLElement>(null);
   const contactRef = useRef<HTMLElement>(null);
   const commandInputRef = useRef<HTMLInputElement>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
@@ -118,8 +115,6 @@ export function CommandPortfolio() {
         return workRef;
       case "skills":
         return skillsRef;
-      case "resume":
-        return resumeRef;
       case "contact":
         return contactRef;
       default:
@@ -245,8 +240,8 @@ export function CommandPortfolio() {
         addHistory("skills", "Opened the technical stack.");
         break;
       case "resume":
-        activateSection("resume");
-        addHistory("resume", "Opened resume and education.");
+        window.location.href = profile.resume;
+        addHistory("resume", "Resume download started.");
         break;
       case "contact":
         activateSection("contact");
@@ -358,7 +353,6 @@ export function CommandPortfolio() {
                 ["projects", "Projects"],
                 ["work", "Work"],
                 ["skills", "Skills"],
-                ["resume", "Resume"],
                 ["contact", "Contact"]
               ].map(([key, label]) => (
                 <button
@@ -374,6 +368,13 @@ export function CommandPortfolio() {
                   {label}
                 </button>
               ))}
+              <a
+                href={profile.resume}
+                download
+                className="rounded-full border border-accent bg-accent px-4 py-2 text-sm font-bold text-card transition hover:brightness-95"
+              >
+                Resume
+              </a>
             </div>
           </div>
         </nav>
@@ -385,35 +386,36 @@ export function CommandPortfolio() {
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="rounded-[2.2rem] border border-line bg-card/92 p-6 shadow-soft sm:p-8"
           >
-            <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.28em] text-accent">
-              Claude-inspired narrative portfolio
-            </p>
-            <h1 className="mt-5 max-w-4xl font-display text-5xl leading-[0.94] tracking-[-0.04em] sm:text-6xl lg:text-7xl">
-              Nishant Bhadke builds resilient BFSI systems with calm, audited execution.
+            <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.28em] text-accent">{profile.role}</p>
+            <h1 className="mt-5 max-w-4xl font-display text-5xl leading-[0.96] tracking-[-0.04em] sm:text-6xl lg:text-[5.2rem]">
+              {profile.name}
             </h1>
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
+            <p className="mt-4 max-w-3xl text-xl font-semibold leading-8 text-ink">
+              Backend engineer focused on BFSI workflows, secure APIs, caching, and production delivery.
+            </p>
+            <p className="mt-4 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <MetricCard label="Current role" value={profile.role} icon={<BriefcaseBusiness size={18} />} />
               <MetricCard label="Location" value={profile.location} icon={<MapPin size={18} />} />
-              <MetricCard label="Recognition" value={recognition.awards[0]} icon={<Sparkles size={18} />} />
+              <MetricCard label="Specialty" value="BFSI backend delivery" icon={<Command size={18} />} />
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => activateSection("contact")}
-                className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-bold text-card transition hover:brightness-95"
-              >
-                Start a conversation <ArrowRight size={16} />
-              </button>
               <a
                 href={profile.resume}
                 download
-                className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-5 py-3 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent"
+                className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-bold text-card transition hover:brightness-95"
               >
                 Download resume <ArrowDownToLine size={16} />
               </a>
+              <button
+                type="button"
+                onClick={() => activateSection("contact")}
+                className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-5 py-3 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent"
+              >
+                Contact
+              </button>
               <a
                 href={portfolioRepo}
                 target="_blank"
@@ -474,70 +476,49 @@ export function CommandPortfolio() {
                 ))}
               </div>
             </motion.section>
-
-            <motion.section
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-              className="rounded-[2rem] border border-line bg-card/92 p-6 shadow-soft"
-            >
-              <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.24em] text-muted">Sketch translation</p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {["Narrative intro", "Project spotlight", "Typed outreach", "Semantic safety"].map((item) => (
-                  <div key={item} className="rounded-[1.4rem] border border-line bg-surface/85 px-4 py-4 text-sm font-semibold text-ink">
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {profile.workedAcross.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => runSearch(item)}
-                    className="rounded-full border border-line bg-command/70 px-3 py-2 text-sm font-semibold text-muted transition hover:border-accent hover:text-accent"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </motion.section>
           </div>
         </header>
 
-        <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <section>
           <SectionShell
             title="About me"
             eyebrow="Narrative"
-            description="The site now reads more like a considered profile than a dashboard. The command rail still exists, but the page flows as a calm story first."
+            description="The first screen keeps the essentials visible: role, resume access, direct contact, and the type of backend work delivered in production."
           >
-            <p className="text-base leading-8 text-muted">
-              Nishant works at the overlap of backend delivery, BFSI workflow rigor, and production pragmatism. He ships APIs, secure integrations, query-tuned data access, and maker-checker flows that survive real operational pressure.
-            </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <SoftFact label="Core stack" value=".NET Core, SQL Server, Redis, Docker, AWS" />
-              <SoftFact label="Preferred problems" value="Banking workflows, secure integrations, performance tuning" />
-              <SoftFact label="Operating mode" value="Delivery-focused, compliance-aware, metrics-driven" />
-              <SoftFact label="Recent focus" value="Loan journeys, document pipelines, API reliability" />
-            </div>
-          </SectionShell>
-
-          <SectionShell
-            title="Signals recruiters notice"
-            eyebrow="Highlights"
-            description="These are the themes the portfolio keeps reinforcing across sections."
-          >
-            <div className="grid gap-3">
-              <InsightRow title="Production mindset" text="Projects are framed around operational effect, not just technology names." />
-              <InsightRow title="Banking context" text="The work is clearly tied to BFSI, collections, account journeys, and compliance-heavy releases." />
-              <InsightRow title="Calm communication" text="The contact composer nudges structured, respectful outreach instead of open-ended free text." />
-            </div>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {recognition.certifications.concat(recognition.awards).map((item) => (
-                <span key={item} className="rounded-full border border-line bg-command/70 px-3 py-2 text-sm font-semibold text-muted">
-                  {item}
-                </span>
-              ))}
+            <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+              <div>
+                <p className="text-base leading-8 text-muted">
+                  Nishant works at the overlap of backend delivery, BFSI workflow rigor, and production pragmatism. He ships APIs, secure integrations, query-tuned data access, and maker-checker flows that survive real operational pressure.
+                </p>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  <SoftFact label="Core stack" value=".NET Core, SQL Server, Redis, Docker, AWS" />
+                  <SoftFact label="Preferred problems" value="Banking workflows, secure integrations, performance tuning" />
+                  <SoftFact label="Operating mode" value="Delivery-focused, compliance-aware, metrics-driven" />
+                  <SoftFact label="Recent focus" value="Loan journeys, document pipelines, API reliability" />
+                </div>
+              </div>
+              <div className="rounded-[1.5rem] border border-line bg-surface/88 p-5">
+                <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">Worked across</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {profile.workedAcross.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => runSearch(item)}
+                      className="rounded-full border border-line bg-card px-3 py-2 text-sm font-semibold text-muted transition hover:border-accent hover:text-accent"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {recognition.certifications.concat(recognition.awards).map((item) => (
+                    <span key={item} className="rounded-full border border-line bg-command/70 px-3 py-2 text-sm font-semibold text-muted">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </SectionShell>
         </section>
@@ -669,92 +650,14 @@ export function CommandPortfolio() {
                 </div>
               </SectionShell>
             </section>
-
-            <section ref={resumeRef}>
-              <SectionShell
-                title="Resume and education"
-                eyebrow="Resume"
-                description="A direct download path stays visible, but the surrounding context reinforces role fit before the file is opened."
-              >
-                <div className="grid gap-4 md:grid-cols-[0.92fr_1.08fr]">
-                  <article className="rounded-[1.5rem] border border-line bg-surface/88 p-5">
-                    <h3 className="font-display text-3xl tracking-[-0.03em]">Resume download</h3>
-                    <p className="mt-3 text-sm leading-7 text-muted">
-                      Recruiters can download the current PDF directly. The site keeps the button in context instead of hiding it behind navigation.
-                    </p>
-                    <a
-                      href={profile.resume}
-                      download
-                      className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-bold text-card transition hover:brightness-95"
-                    >
-                      Download resume <ArrowDownToLine size={16} />
-                    </a>
-                  </article>
-                  <article className="rounded-[1.5rem] border border-line bg-surface/88 p-5">
-                    <h3 className="font-display text-3xl tracking-[-0.03em]">Education</h3>
-                    <div className="mt-4 grid gap-4">
-                      {education.map((item) => (
-                        <div key={item.degree} className="rounded-[1.2rem] border border-line bg-card/70 px-4 py-4">
-                          <p className="font-semibold">{item.degree}</p>
-                          <p className="mt-1 text-sm text-muted">{item.school}</p>
-                          <p className="mt-2 font-mono text-xs uppercase tracking-[0.18em] text-muted">{item.year}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </article>
-                </div>
-              </SectionShell>
-            </section>
           </div>
         </section>
 
-        <section ref={contactRef} className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr]">
+        <section ref={contactRef}>
           <SectionShell
             title="Contact"
-            eyebrow="Reach out"
-            description="This section follows your sketch: details on the left, structured email writing on the right, and a typewriter interaction under the message box."
-          >
-            <div className="grid gap-3">
-              <ContactCard label="Email" value={profile.email} href={`mailto:${profile.email}`} icon={<Mail size={16} />} />
-              <ContactCard label="Phone" value={profile.phone} href={`tel:${profile.phone.replace(/\s/g, "")}`} icon={<Phone size={16} />} />
-              <ContactCard
-                label="LinkedIn"
-                value="nishant-bhadke-983837185"
-                href={profile.linkedin}
-                icon={<Linkedin size={16} />}
-              />
-            </div>
-
-            <div className="mt-6 rounded-[1.6rem] border border-line bg-command/80 p-5">
-              <div className="flex items-center gap-3">
-                <ShieldCheck size={18} className="text-[#17603a]" />
-                <div>
-                  <p className="font-semibold">Semantic safety is active.</p>
-                  <p className="text-sm leading-6 text-muted">
-                    If the drafted message crosses {thresholdPercent}% offensiveness, the send action is blocked.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-5 grid gap-3">
-                {commandHelp.slice(0, 5).map(([command, label]) => (
-                  <button
-                    key={command}
-                    type="button"
-                    onClick={() => runCommand(command)}
-                    className="flex items-center justify-between rounded-[1.2rem] border border-line bg-card/75 px-4 py-3 text-left transition hover:border-accent hover:text-accent"
-                  >
-                    <span className="font-mono text-sm font-bold">{command}</span>
-                    <span className="text-xs text-muted">{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </SectionShell>
-
-          <SectionShell
-            title="Write an email"
             eyebrow="Composer"
-            description="The form checks message tone in real time. Safe messages can open the mail client; offensive drafts stay blocked."
+            description="One card, direct contact details, and a guarded email composer with a live offensiveness threshold."
           >
             <form
               onSubmit={(event) => {
@@ -763,6 +666,17 @@ export function CommandPortfolio() {
               }}
               className="grid gap-5"
             >
+              <div className="grid gap-3 md:grid-cols-3">
+                <ContactCard label="Email" value={profile.email} href={`mailto:${profile.email}`} icon={<Mail size={16} />} />
+                <ContactCard label="Phone" value={profile.phone} href={`tel:${profile.phone.replace(/\s/g, "")}`} icon={<Phone size={16} />} />
+                <ContactCard
+                  label="LinkedIn"
+                  value="nishant-bhadke-983837185"
+                  href={profile.linkedin}
+                  icon={<Linkedin size={16} />}
+                />
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
                   label="Your name"
@@ -835,26 +749,19 @@ export function CommandPortfolio() {
                   </div>
                 </div>
 
-                <div className="mt-5 grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
-                  <div className="rounded-[1.2rem] border border-line bg-card/70 p-4">
-                    <p className="text-sm font-semibold">Detected guidance</p>
-                    <div className="mt-3 grid gap-2 text-sm leading-6 text-muted">
-                      {(draftAnalysis.guidance.length > 0 ? draftAnalysis.guidance : ["Draft is respectful and can be opened in the mail client."]).map((item) => (
-                        <p key={item} className="rounded-[1rem] bg-surface/80 px-3 py-2">
-                          {item}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="rounded-[1.2rem] border border-line bg-card/70 p-4">
-                    <p className="text-sm font-semibold">Detected signals</p>
-                    <div className="mt-3 grid gap-2 text-sm leading-6 text-muted">
-                      <SignalChip label="Has intent" active={draftAnalysis.intentDetected} />
-                      <SignalChip label="Name included" active={draftAnalysis.completeness.hasName} />
-                      <SignalChip label="Valid reply email" active={draftAnalysis.completeness.hasEmail} />
-                      <SignalChip label="Subject included" active={draftAnalysis.completeness.hasSubject} />
-                      <SignalChip label="Message present" active={draftAnalysis.completeness.hasMessage} />
-                    </div>
+                <div className="mt-5 rounded-[1.2rem] border border-line bg-card/70 p-4">
+                  <p className="text-sm font-semibold">Draft guidance</p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-sm leading-6">
+                    {(draftAnalysis.guidance.length > 0 ? draftAnalysis.guidance : ["Draft is respectful and can be opened in the mail client."]).map((item) => (
+                      <p key={item} className="rounded-full bg-surface/80 px-3 py-2 text-muted">
+                        {item}
+                      </p>
+                    ))}
+                    <SignalChip label="Has intent" active={draftAnalysis.intentDetected} />
+                    <SignalChip label="Name included" active={draftAnalysis.completeness.hasName} />
+                    <SignalChip label="Valid reply email" active={draftAnalysis.completeness.hasEmail} />
+                    <SignalChip label="Subject included" active={draftAnalysis.completeness.hasSubject} />
+                    <SignalChip label="Message present" active={draftAnalysis.completeness.hasMessage} />
                   </div>
                 </div>
               </article>
@@ -944,15 +851,6 @@ function SoftFact({ label, value }: { label: string; value: string }) {
       <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-muted">{label}</p>
       <p className="mt-3 text-sm leading-7 text-ink">{value}</p>
     </div>
-  );
-}
-
-function InsightRow({ title, text }: { title: string; text: string }) {
-  return (
-    <article className="rounded-[1.4rem] border border-line bg-surface/85 p-4">
-      <p className="text-base font-semibold">{title}</p>
-      <p className="mt-2 text-sm leading-7 text-muted">{text}</p>
-    </article>
   );
 }
 
