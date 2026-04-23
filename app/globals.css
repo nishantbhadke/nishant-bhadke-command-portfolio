@@ -4,8 +4,8 @@
 
 :root {
   color-scheme: light;
-  background: #f7f4ee;
-  color: #111111;
+  background: #f6efe5;
+  color: #231913;
 }
 
 * {
@@ -19,14 +19,16 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background: #f7f4ee;
+  background: #f6efe5;
+  color: #231913;
+  font-family: Aptos, "Segoe UI Variable", "Segoe UI", sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: #111111;
-  color: #d7ff65;
+  background: #bd6f41;
+  color: #fbf5ec;
 }
 
 button,
@@ -38,8 +40,33 @@ input {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 2px solid #111111;
+  outline: 2px solid #bd6f41;
   outline-offset: 3px;
+}
+
+textarea:focus-visible {
+  outline: 2px solid #bd6f41;
+  outline-offset: 3px;
+}
+
+* {
+  scrollbar-color: #9f876c #efe4d3;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #efe4d3;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #9f876c;
+  border: 2px solid #efe4d3;
+  border-radius: 999px;
 }
 
 @media (prefers-reduced-motion: reduce) {

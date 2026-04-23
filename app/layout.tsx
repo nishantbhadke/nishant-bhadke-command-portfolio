@@ -5,14 +5,14 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://nishantbhadke.githu
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Nishant Bhadke | Command Portfolio",
+  title: "Nishant Bhadke | Claude-Inspired Portfolio",
   description:
-    "Interactive command-driven portfolio for Nishant Bhadke, .NET Backend Engineer focused on BFSI platforms, APIs, SQL Server, Redis, AWS, and Docker.",
+    "Claude-inspired narrative portfolio for Nishant Bhadke, a .NET Backend Engineer focused on BFSI platforms, secure APIs, SQL Server, Redis, AWS, and Docker.",
   openGraph: {
-    title: "Nishant Bhadke | Command Portfolio",
-    description: "Command-driven portfolio for backend engineering work across BFSI systems.",
+    title: "Nishant Bhadke | Claude-Inspired Portfolio",
+    description: "Narrative portfolio for backend engineering work across BFSI systems, with guarded contact composition.",
     url: siteUrl,
-    siteName: "Nishant Bhadke Command Portfolio",
+    siteName: "Nishant Bhadke Portfolio V2",
     locale: "en_IN",
     type: "website"
   },
