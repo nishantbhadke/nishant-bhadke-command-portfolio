@@ -660,9 +660,9 @@ function SectionShell({
 function surfaceTitle(activeSection: SectionKey) {
   switch (activeSection) {
     case "projects":
-      return "Projects";
+      return "Projects and experience";
     case "work":
-      return "Experience";
+      return "Projects and experience";
     case "skills":
       return "Technical stack";
     case "contact":
@@ -675,9 +675,9 @@ function surfaceTitle(activeSection: SectionKey) {
 function surfaceDescription(activeSection: SectionKey) {
   switch (activeSection) {
     case "projects":
-      return "Use project commands or the selector below to switch between banking and backend case studies.";
+      return "Project detail and delivery experience stay in one place so the reader doesn’t bounce between separate cards.";
     case "work":
-      return "The work view keeps the timeline concise and outcome-oriented.";
+      return "Project detail and delivery experience stay in one place so the reader doesn’t bounce between separate cards.";
     case "skills":
       return "The stack is grouped around backend delivery instead of long scrolling sections.";
     case "contact":
@@ -700,7 +700,7 @@ function SurfacePanel({
   openProject: (index: number, commandLabel?: string) => void;
   setProjectIndex: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  if (activeSection === "projects") {
+  if (activeSection === "projects" || activeSection === "work") {
     return (
       <div className="grid gap-4">
         <article className="rounded-[1.6rem] border border-line bg-surface/90 p-5">
@@ -743,48 +743,51 @@ function SurfacePanel({
           </div>
         </article>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          {projects.map((project, index) => (
-            <button
-              key={project.id}
-              type="button"
-              onClick={() => openProject(index)}
-              className={`rounded-[1.3rem] border p-4 text-left transition ${
-                index === projectIndex
-                  ? "border-accent bg-accent text-card"
-                  : "border-line bg-surface/85 text-muted hover:border-accent hover:text-accent"
-              }`}
-            >
-              <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.18em]">{project.label}</p>
-              <p className="mt-2 text-base font-semibold leading-6">{project.title}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (activeSection === "work") {
-    return (
-      <div className="grid gap-4">
-        {work.map((item) => (
-          <article key={item.company} className="rounded-[1.6rem] border border-line bg-surface/88 p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h3 className="font-display text-3xl tracking-[-0.03em]">{item.role}</h3>
-                <p className="mt-2 text-sm font-semibold uppercase tracking-[0.16em] text-muted">{item.company}</p>
-              </div>
-              <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted">{item.period}</p>
+        <article className="rounded-[1.6rem] border border-line bg-surface/88 p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-accent">Experience</p>
+              <h3 className="mt-2 font-display text-3xl tracking-[-0.03em]">Delivery timeline</h3>
             </div>
-            <div className="mt-5 grid gap-3">
-              {item.bullets.map((bullet) => (
-                <div key={bullet} className="rounded-[1.2rem] border border-line bg-card/70 px-4 py-3 text-sm leading-7 text-muted">
-                  {bullet}
-                </div>
+            <div className="flex flex-wrap gap-2">
+              {projects.map((project, index) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  onClick={() => openProject(index)}
+                  className={`rounded-full border px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] transition ${
+                    index === projectIndex
+                      ? "border-accent bg-accent text-card"
+                      : "border-line bg-card text-muted hover:border-accent hover:text-accent"
+                  }`}
+                >
+                  {project.label}
+                </button>
               ))}
             </div>
-          </article>
-        ))}
+          </div>
+
+          <div className="mt-5 grid gap-4">
+            {work.map((item) => (
+              <div key={item.company} className="rounded-[1.2rem] border border-line bg-card/70 p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-lg font-semibold">{item.role}</p>
+                    <p className="mt-1 text-sm font-semibold uppercase tracking-[0.14em] text-muted">{item.company}</p>
+                  </div>
+                  <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted">{item.period}</p>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  {item.bullets.map((bullet) => (
+                    <p key={bullet} className="rounded-[1rem] bg-surface/80 px-3 py-2 text-sm leading-6 text-muted">
+                      {bullet}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </article>
       </div>
     );
   }
