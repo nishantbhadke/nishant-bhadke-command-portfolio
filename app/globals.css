@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Manrope:wght@400;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  background: #f6efe5;
-  color: #231913;
+  color-scheme: dark;
+  background: #0b0b09;
+  color: #fff4cf;
 }
 
 * {
@@ -21,9 +21,9 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background: #f6efe5;
-  color: #231913;
-  font-family: 'Inter', Aptos, "Segoe UI Variable", "Segoe UI", sans-serif;
+  background: #0b0b09;
+  color: #fff4cf;
+  font-family: "Manrope", Aptos, "Segoe UI Variable", "Segoe UI", sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -31,8 +31,8 @@ body {
 }
 
 ::selection {
-  background: #bd6f41;
-  color: #fbf5ec;
+  background: #f5bd35;
+  color: #161207;
 }
 
 button,
@@ -44,12 +44,12 @@ input {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 2px solid #bd6f41;
+  outline: 2px solid #f5bd35;
   outline-offset: 3px;
 }
 
 textarea:focus-visible {
-  outline: 2px solid #bd6f41;
+  outline: 2px solid #f5bd35;
   outline-offset: 3px;
 }
 
@@ -60,8 +60,8 @@ textarea:focus-visible {
   left: 16px;
   z-index: 9999;
   padding: 12px 24px;
-  background: #bd6f41;
-  color: #fbf5ec;
+  background: #f5bd35;
+  color: #161207;
   font-weight: 700;
   font-size: 0.875rem;
   border-radius: 0 0 12px 12px;
@@ -88,7 +88,7 @@ textarea:focus-visible {
 
 /* ── Scrollbar ── */
 * {
-  scrollbar-color: #9f876c #efe4d3;
+  scrollbar-color: #b8922c #17140b;
   scrollbar-width: thin;
 }
 
@@ -98,12 +98,12 @@ textarea:focus-visible {
 }
 
 ::-webkit-scrollbar-track {
-  background: #efe4d3;
+  background: #17140b;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #9f876c;
-  border: 2px solid #efe4d3;
+  background: #b8922c;
+  border: 2px solid #17140b;
   border-radius: 999px;
 }
 

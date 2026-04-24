@@ -2,340 +2,731 @@
 
 import { motion } from "framer-motion";
 import {
+  ArrowDown,
   BriefcaseBusiness,
-  Command,
+  Download,
+  Grip,
   Linkedin,
   Mail,
   MapPin,
   Phone,
   Send,
-  ShieldAlert,
-  ShieldCheck
+  Terminal,
+  Wrench
 } from "lucide-react";
-import { KeyboardEvent, Suspense, lazy, startTransition, useDeferredValue, useCallback, useRef, useState } from "react";
-import { profile, projects, recognition, skills, work } from "@/lib/profile";
-import { analyzeContactDraft, OFFENSIVE_THRESHOLD } from "@/lib/messageSafety";
+import { FormEvent, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { analyzeContactDraft } from "@/lib/messageSafety";
 import type { ContactDraft } from "@/lib/messageSafety";
+import { profile, projects, skills, work } from "@/lib/profile";
 
-import { CommandInput } from "@/components/CommandInput";
-import { CommandHistory, type OutputEntry } from "@/components/CommandHistory";
-import { SurfacePanel, type SectionKey } from "@/components/SurfacePanel";
-import { Footer } from "@/components/Footer";
-import { MetricCard, SoftFact, ContactCard, Field, AnalysisStat, SignalChip, SectionShell } from "@/components/ui";
+type SectionKey = "overview" | "projects" | "work" | "skills" | "contact";
+type DockMode = "right" | "bottom" | "wide";
+type ContactStep = "name" | "email" | "message";
 
-const TypewriterKeyboard = lazy(() =>
-  import("@/components/TypewriterKeyboard").then((m) => ({ default: m.TypewriterKeyboard }))
-);
+type HistoryEntry = {
+  id: number;
+  command: string;
+  response: string;
+};
 
-type ComposerField = "name" | "email" | "subject" | "message";
+type ContactFlow = {
+  step: ContactStep;
+  name: string;
+  email: string;
+};
 
-const starterHistory: OutputEntry[] = [
-  { id: 1, command: "system", response: "Ready. Try about, projects, search redis, work, resume, or contact." }
-];
+const commandList = ["about", "projects", "work", "skills", "contact", "download resume", "clear"];
 
-const greetings = ["Hello", "Hola", "Ola", "Bonjour", "Ciao", "Namaste"];
-const portfolioRepo = "https://github.com/nishantbhadke/nishant-bhadke-command-portfolio";
-
-function normalize(v: string) { return v.trim().toLowerCase(); }
-
-function commandAlias(cmd: string) {
-  const aliases: Record<string, string> = {
-    overview: "about", intro: "about", exp: "work", experience: "work",
-    stack: "skills", tech: "skills", cv: "resume", mail: "contact",
-    email: "contact", project: "projects", composer: "contact"
-  };
-  return aliases[cmd] ?? cmd;
+function normalize(value: string) {
+  return value.trim().toLowerCase();
 }
 
-const commandHelpFull = [
-  ["about", "open the about surface"],
-  ["projects", "open the featured project area"],
-  ["work", "open the experience surface"],
-  ["skills", "show the technical stack"],
-  ["resume", "download resume instantly"],
-  ["contact", "open the guarded contact composer"],
-  ["search <term>", "find a project, bank, or skill keyword"],
-  ["rbl-bcms", "focus the BCMS engagement"],
-  ["rbl-radc", "focus the RADC engagement"],
-  ["clear", "reset the command log"]
-] as const;
+function commandAlias(command: string) {
+  const aliases: Record<string, string> = {
+    intro: "about",
+    profile: "about",
+    project: "projects",
+    experience: "work",
+    exp: "work",
+    stack: "skills",
+    tech: "skills",
+    resume: "download resume",
+    cv: "download resume",
+    mail: "contact",
+    email: "contact"
+  };
+
+  return aliases[command] ?? command;
+}
+
+function sectionForCommand(command: string): SectionKey | null {
+  if (command === "about") return "overview";
+  if (command === "projects") return "projects";
+  if (command === "work") return "work";
+  if (command === "skills") return "skills";
+  if (command === "contact") return "contact";
+  return null;
+}
+
+function promptFor(flow: ContactFlow | null) {
+  if (!flow) return "$";
+  if (flow.step === "name") return "[INPUT: Your Name]>";
+  if (flow.step === "email") return "[INPUT: Your Email]>";
+  return "[INPUT: Your Message]>";
+}
 
 export function CommandPortfolio() {
-  const contactRef = useRef<HTMLElement>(null);
-  const messageRef = useRef<HTMLTextAreaElement>(null);
-
   const [activeSection, setActiveSection] = useState<SectionKey>("overview");
   const [projectIndex, setProjectIndex] = useState(0);
   const [input, setInput] = useState("");
-  const [history, setHistory] = useState<OutputEntry[]>(starterHistory);
-  const [pressedKey, setPressedKey] = useState("");
+  const [history, setHistory] = useState<HistoryEntry[]>([
+    {
+      id: 1,
+      command: "boot",
+      response: "Portfolio loaded. Try `projects`, `rbl-bcms`, `download resume`, or move this console from the dock controls."
+    }
+  ]);
+  const [dockMode, setDockMode] = useState<DockMode>("right");
+  const [contactFlow, setContactFlow] = useState<ContactFlow | null>(null);
   const [notice, setNotice] = useState("");
   const [composer, setComposer] = useState<ContactDraft>({ name: "", email: "", subject: "", message: "" });
+
+  const outputRef = useRef<HTMLDivElement>(null);
+  const overviewRef = useRef<HTMLElement>(null);
+  const projectsRef = useRef<HTMLElement>(null);
+  const workRef = useRef<HTMLElement>(null);
+  const skillsRef = useRef<HTMLElement>(null);
+  const contactRef = useRef<HTMLElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const deferredMessage = useDeferredValue(composer.message);
   const draftAnalysis = analyzeContactDraft({ ...composer, message: deferredMessage });
 
-  const addHistory = useCallback((command: string, response: string) => {
-    setHistory((items) => [...items.slice(-5), { id: Date.now(), command, response }]);
+  const refs: Record<SectionKey, React.RefObject<HTMLElement | null>> = useMemo(
+    () => ({
+      overview: overviewRef,
+      projects: projectsRef,
+      work: workRef,
+      skills: skillsRef,
+      contact: contactRef
+    }),
+    []
+  );
+
+  useEffect(() => {
+    inputRef.current?.focus();
   }, []);
 
-  const activateSection = useCallback((section: SectionKey, scroll = true) => {
-    startTransition(() => setActiveSection(section));
-    if (section === "contact" && scroll) {
-      contactRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, []);
+  function addHistory(command: string, response: string) {
+    setHistory((items) => [...items.slice(-7), { id: Date.now(), command, response }]);
+    window.setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
+  }
 
-  const openProject = useCallback((index: number, commandLabel?: string) => {
-    setProjectIndex(index);
-    activateSection("projects", false);
-    addHistory(commandLabel ?? projects[index].command, `Opened ${projects[index].title}.`);
-  }, [activateSection, addHistory]);
+  function openSection(section: SectionKey, response: string) {
+    setActiveSection(section);
+    addHistory(section === "overview" ? "about" : section, response);
+    window.setTimeout(() => refs[section].current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
 
-  function runSearch(rawTerm: string) {
-    const query = normalize(rawTerm);
-    if (!query) { addHistory("search", "Type a keyword like redis, docker, radc, aws, contact, or resume."); return; }
-    const pMatch = projects.findIndex((p) =>
-      [p.title, p.label, p.summary, p.impact, p.command, p.tech.join(" ")].join(" ").toLowerCase().includes(query)
-    );
-    if (pMatch >= 0) { openProject(pMatch, `search ${query}`); return; }
-    const sMatch = skills.find((g) => [g.group, g.items.join(" ")].join(" ").toLowerCase().includes(query));
-    if (sMatch) { activateSection("skills", false); addHistory(`search ${query}`, `Found ${sMatch.group}. Moved to the technical stack.`); return; }
-    const wMatch = work.find((w) => [w.company, w.role, w.bullets.join(" ")].join(" ").toLowerCase().includes(query));
-    if (wMatch) { activateSection("work", false); addHistory(`search ${query}`, `Matched ${wMatch.company}. Opening experience.`); return; }
-    if ([profile.name, profile.role, profile.location, recognition.awards.join(" "), recognition.certifications.join(" ")]
-      .join(" ").toLowerCase().includes(query)) {
-      activateSection("overview", false); addHistory(`search ${query}`, "Matched the profile narrative."); return;
+  function downloadResume() {
+    const link = document.createElement("a");
+    link.href = profile.resume;
+    link.download = "Nishant_Bhadke_Resume.pdf";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function startContactFlow() {
+    setContactFlow({ step: "name", name: "", email: "" });
+    setActiveSection("contact");
+    addHistory("contact", "Terminal contact started. Answer the three prompts, or type `cancel`.");
+    window.setTimeout(() => contactRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
+
+  function handleContactInput(rawValue: string) {
+    const value = rawValue.trim();
+    const lowered = normalize(value);
+
+    if (lowered === "cancel") {
+      setContactFlow(null);
+      addHistory("cancel", "Contact flow cancelled. Command mode restored.");
+      return;
     }
-    if (["email", "contact", "message", "linkedin"].some((t) => t.includes(query) || query.includes(t))) {
-      activateSection("contact"); addHistory(`search ${query}`, "Moved to the contact composer."); return;
+
+    if (!contactFlow) return;
+
+    if (contactFlow.step === "name") {
+      if (!value) {
+        addHistory("name", "Name is required.");
+        return;
+      }
+      setContactFlow({ step: "email", name: value, email: "" });
+      addHistory("name", `Got it, ${value}.`);
+      return;
     }
-    addHistory(`search ${query}`, "No exact match. Try redis, banking, docker, radc, aws, contact, or resume.");
+
+    if (contactFlow.step === "email") {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        addHistory("email", "That email format looks wrong. Try again.");
+        return;
+      }
+      setContactFlow({ step: "message", name: contactFlow.name, email: value });
+      addHistory("email", "Email saved. Add the message next.");
+      return;
+    }
+
+    if (!value) {
+      addHistory("message", "Message cannot be empty.");
+      return;
+    }
+
+    setComposer({
+      name: contactFlow.name,
+      email: contactFlow.email,
+      subject: "Portfolio conversation",
+      message: value
+    });
+    setContactFlow(null);
+    addHistory("message", `Message Sent. Thanks, ${contactFlow.name}. I can reply at ${contactFlow.email}.`);
   }
 
   function runCommand(rawCommand?: string) {
     const original = normalize(rawCommand ?? input);
     const command = commandAlias(original);
+
     if (!command) return;
-    setInput(""); setNotice("");
-    if (command === "clear") { setHistory(starterHistory); return; }
-    if (command.startsWith("search ")) { runSearch(command.replace(/^search\s+/, "")); return; }
-    const pIdx = projects.findIndex((p) => p.command === command || p.id === command);
-    if (pIdx >= 0) { openProject(pIdx, command); return; }
-    switch (command) {
-      case "help":
-        activateSection("overview", false);
-        addHistory("help", `Available commands: ${commandHelpFull.map(([c]) => c).join(", ")}.`);
-        break;
-      case "about": activateSection("overview", false); addHistory("about", "Moved to the introduction."); break;
-      case "projects": activateSection("projects", false); addHistory("projects", "Opened the project showcase."); break;
-      case "work": activateSection("work", false); addHistory("work", "Opened the delivery timeline."); break;
-      case "skills": activateSection("skills", false); addHistory("skills", "Opened the technical stack."); break;
-      case "resume": window.location.href = profile.resume; addHistory("resume", "Resume download started."); break;
-      case "contact":
-        activateSection("contact"); addHistory("contact", "Opened the guarded contact composer.");
-        window.setTimeout(() => messageRef.current?.focus(), 180); break;
-      case "search": runSearch(""); break;
-      default: runSearch(command);
-    }
-  }
 
-  function registerKey(key: string) {
-    const label = key.length === 1 ? key.toUpperCase() : key;
-    setPressedKey(label);
-    window.setTimeout(() => setPressedKey(""), 120);
-  }
-
-  function updateComposer(field: ComposerField, value: string) {
-    setComposer((c) => ({ ...c, [field]: value }));
+    setInput("");
     setNotice("");
+
+    if (contactFlow) {
+      handleContactInput(rawCommand ?? input);
+      return;
+    }
+
+    if (command === "clear") {
+      setHistory([]);
+      return;
+    }
+
+    if (command === "help" || command === "ls" || command === "list") {
+      addHistory(command, `Available commands: ${commandList.join(", ")}. Project shortcuts: ${projects.map((project) => project.command).join(", ")}.`);
+      return;
+    }
+
+    if (command === "download resume") {
+      downloadResume();
+      addHistory(command, "Resume download started.");
+      return;
+    }
+
+    const directSection = sectionForCommand(command);
+    if (directSection === "contact") {
+      startContactFlow();
+      return;
+    }
+
+    if (directSection) {
+      openSection(directSection, `Moved to ${directSection === "overview" ? "about" : directSection}.`);
+      return;
+    }
+
+    const projectIndexMatch = projects.findIndex(
+      (project) => project.command === command || project.id === command || project.title.toLowerCase().includes(command)
+    );
+
+    if (projectIndexMatch >= 0) {
+      setProjectIndex(projectIndexMatch);
+      setActiveSection("projects");
+      addHistory(command, `Opened ${projects[projectIndexMatch].shortTitle}. Problem, contribution, and result are now in view.`);
+      window.setTimeout(() => projectsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+      return;
+    }
+
+    if (command.startsWith("search ")) {
+      const query = command.replace(/^search\s+/, "");
+      const projectMatch = projects.findIndex((project) =>
+        [project.title, project.shortTitle, project.summary, project.problem, project.contribution, project.impact, project.tech.join(" ")]
+          .join(" ")
+          .toLowerCase()
+          .includes(query)
+      );
+
+      if (projectMatch >= 0) {
+        setProjectIndex(projectMatch);
+        setActiveSection("projects");
+        addHistory(command, `Found ${projects[projectMatch].shortTitle}.`);
+        window.setTimeout(() => projectsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+        return;
+      }
+
+      addHistory(command, "No exact match. Try `redis`, `loan`, `oracle`, `pdf`, or `aws`.");
+      return;
+    }
+
+    addHistory(command, "I did not recognize that command. Try `help`, `projects`, `rbl-bcms`, `skills`, or `contact`.");
   }
 
-  function typeKey(key: string) {
-    registerKey(key);
-    activateSection("contact", false);
-    messageRef.current?.focus();
-    if (key === "backspace") { setComposer((c) => ({ ...c, message: c.message.slice(0, -1) })); return; }
-    if (key === "space") { setComposer((c) => ({ ...c, message: `${c.message} ` })); return; }
-    if (key === "enter") { setComposer((c) => ({ ...c, message: `${c.message}\n` })); return; }
-    setComposer((c) => ({ ...c, message: `${c.message}${key.toLowerCase()}` }));
+  function submitCommand(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    runCommand(input);
   }
-
-  function onMessageKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) { registerKey(event.key); }
 
   function openDraftEmail() {
     const analysis = analyzeContactDraft(composer);
-    if (!composer.message.trim()) { setNotice("Add a message before opening the draft."); activateSection("contact"); return; }
-    if (analysis.blocked) {
-      setNotice(`Draft blocked. Offensiveness is ${analysis.offensivenessPercent}% and must stay below ${Math.round(OFFENSIVE_THRESHOLD * 100)}%.`);
-      activateSection("contact"); return;
+    if (!composer.message.trim()) {
+      setNotice("Add a short message first.");
+      return;
     }
-    const body = ["Hi Nishant,", "", composer.message.trim(), "",
+    if (analysis.blocked) {
+      setNotice("Tone check blocked this draft. Rewrite it and try again.");
+      return;
+    }
+
+    const body = [
+      "Hi Nishant,",
+      "",
+      composer.message.trim(),
+      "",
       composer.name.trim() ? `From: ${composer.name.trim()}` : null,
       composer.email.trim() ? `Reply email: ${composer.email.trim()}` : null
-    ].filter(Boolean).join("\n");
-    const subject = composer.subject.trim() || "Portfolio conversation";
-    window.location.href = `mailto:${profile.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setNotice("Safe draft prepared in your mail client.");
-    addHistory("contact", "Opened a safe email draft.");
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    window.location.href = `mailto:${profile.email}?subject=${encodeURIComponent(composer.subject || "Portfolio conversation")}&body=${encodeURIComponent(body)}`;
+    setNotice("Email draft opened in your mail client.");
   }
 
-  const thresholdPercent = Math.round(OFFENSIVE_THRESHOLD * 100);
-  const safetyTone = draftAnalysis.blocked ? "text-[#9f2f1a]" : "text-[#17603a]";
+  const selectedProject = projects[projectIndex];
+  const shellClass =
+    dockMode === "right"
+      ? "lg:grid-cols-[minmax(0,1fr)_410px]"
+      : dockMode === "wide"
+        ? "lg:grid-cols-1"
+        : "lg:grid-cols-[minmax(0,1fr)]";
 
   return (
-    <main id="main-content" className="min-h-screen overflow-x-hidden bg-paper text-ink">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(202,117,62,0.16),transparent_34%),radial-gradient(circle_at_top_right,rgba(104,140,176,0.12),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.65),rgba(246,239,229,0.92))]" />
-      <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(rgba(84,61,43,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(84,61,43,0.05)_1px,transparent_1px)] bg-[size:48px_48px]" />
+    <main id="main-content" className="min-h-screen bg-paper text-ink">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(245,189,53,0.16),transparent_32%),linear-gradient(180deg,rgba(11,11,9,0.92),rgba(15,14,10,0.98))]" />
+      <div className="pointer-events-none fixed inset-0 opacity-[0.12] [background-image:linear-gradient(rgba(255,217,102,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,217,102,0.12)_1px,transparent_1px)] [background-size:36px_36px]" />
 
-      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-        {/* ── Navigation ── */}
-        <nav className="rounded-[2rem] border border-line/80 bg-card/88 px-4 py-3 shadow-soft backdrop-blur-xl" aria-label="Main navigation">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-command text-accent">
-                <Command size={18} aria-hidden="true" />
-              </div>
-              <div>
-                <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.24em] text-accent">Portfolio V2</p>
-                <p className="text-sm text-muted">Command-first navigation with direct recruiter access.</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <a href={profile.resume} download className="rounded-full border border-accent bg-accent px-4 py-2 text-sm font-bold text-card transition hover:brightness-95">
-                Resume
-              </a>
-              <button type="button" onClick={() => activateSection("contact")} className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent">
-                Contact
-              </button>
-              <a href={portfolioRepo} target="_blank" rel="noreferrer" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent">
-                Repo
-              </a>
-            </div>
-          </div>
-        </nav>
+      <div className={`relative mx-auto grid w-full max-w-7xl gap-6 px-4 py-5 sm:px-6 lg:px-8 ${shellClass}`}>
+        <div className="grid min-w-0 gap-6">
+          <HeroSection overviewRef={overviewRef} runCommand={runCommand} />
 
-        {/* ── Hero + Command Line ── */}
-        <header className="grid gap-6">
-          <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} className="rounded-[2.2rem] border border-line bg-card/92 p-6 shadow-soft sm:p-8">
-            <div className="grid gap-8 xl:grid-cols-[0.92fr_1.08fr]">
-              <div>
-                <div className="flex flex-wrap gap-2">
-                  {greetings.map((g) => (
-                    <span key={g} className="rounded-full border border-line bg-surface/88 px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-accent">{g}</span>
-                  ))}
-                </div>
-                <p className="mt-6 font-mono text-[0.72rem] font-bold uppercase tracking-[0.28em] text-accent">{profile.role}</p>
-                <h1 className="mt-4 max-w-4xl font-display text-5xl leading-[0.96] tracking-[-0.04em] sm:text-6xl">
-                  I am {profile.name}
-                </h1>
-                <p className="mt-5 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
-                <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                  <MetricCard label="Role" value={profile.role} icon={<BriefcaseBusiness size={18} />} />
-                  <MetricCard label="Location" value={profile.location} icon={<MapPin size={18} />} />
-                  <MetricCard label="Focus" value="BFSI backend delivery" icon={<Command size={18} />} />
-                </div>
-                <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                  <SoftFact label="Worked across" value={profile.workedAcross.join(", ")} />
-                  <SoftFact label="Recognition" value={recognition.certifications.concat(recognition.awards).join(", ")} />
-                </div>
+          <section ref={projectsRef} className="scroll-mt-6">
+            <SectionHeader
+              eyebrow="Selected work"
+              title="Projects that had business rules, deadlines, and people depending on them."
+              copy="I kept this to five projects because a hiring manager should not need to dig through everything I have touched."
+            />
+            <div className="mt-5 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+              <div className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:overflow-visible lg:pb-0">
+                {projects.map((project, index) => (
+                  <button
+                    key={project.id}
+                    type="button"
+                    onClick={() => {
+                      setProjectIndex(index);
+                      setActiveSection("projects");
+                    }}
+                    className={`min-w-64 rounded-lg border px-4 py-3 text-left transition lg:min-w-0 ${
+                      index === projectIndex
+                        ? "border-accent bg-accent text-[#1b1609]"
+                        : "border-line bg-card/86 text-muted hover:border-accent hover:text-ink"
+                    }`}
+                  >
+                    <span className="font-mono text-xs">{project.command}</span>
+                    <span className="mt-2 block text-sm font-bold">{project.shortTitle}</span>
+                    <span className="mt-1 block text-xs leading-5 opacity-80">{project.label}</span>
+                  </button>
+                ))}
               </div>
-              <div>
-                <CommandInput input={input} setInput={setInput} runCommand={runCommand} />
-                <CommandHistory history={history} />
-              </div>
-            </div>
-          </motion.section>
-
-          {/* ── Live Surface ── */}
-          <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }} className="rounded-[2rem] border border-line bg-card/92 p-6 shadow-soft">
-            <SurfacePanel activeSection={activeSection} projectIndex={projectIndex} openProject={openProject} setProjectIndex={setProjectIndex} />
-          </motion.section>
-        </header>
-
-        {/* ── Contact Composer ── */}
-        <section ref={contactRef} aria-label="Contact composer">
-          <SectionShell title="Contact" eyebrow="Composer" description="One card, direct contact details, and a guarded email composer with a live offensiveness threshold.">
-            <form onSubmit={(e) => { e.preventDefault(); openDraftEmail(); }} className="grid gap-5">
-              <div className="grid gap-3 md:grid-cols-3">
-                <ContactCard label="Email" value={profile.email} href={`mailto:${profile.email}`} icon={<Mail size={16} />} />
-                <ContactCard label="Phone" value={profile.phone} href={`tel:${profile.phone.replace(/\s/g, "")}`} icon={<Phone size={16} />} />
-                <ContactCard label="LinkedIn" value="nishant-bhadke-983837185" href={profile.linkedin} icon={<Linkedin size={16} />} />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Your name" value={composer.name} onChange={(v) => updateComposer("name", v)} placeholder="Your name" id="composer-name" />
-                <Field label="Your email" value={composer.email} onChange={(v) => updateComposer("email", v)} placeholder="you@example.com" type="email" id="composer-email" />
-              </div>
-              <Field label="Subject" value={composer.subject} onChange={(v) => updateComposer("subject", v)} placeholder="Discussing a backend engineering role" id="composer-subject" />
-              <div>
-                <label htmlFor="composer-message" className="mb-2 block text-sm font-semibold text-ink">Message</label>
-                <textarea ref={messageRef} id="composer-message" value={composer.message} onChange={(e) => updateComposer("message", e.target.value)} onKeyDown={onMessageKeyDown} placeholder="Hi Nishant, I saw your portfolio and would like to discuss a backend opportunity..." className="min-h-48 w-full rounded-[1.6rem] border border-line bg-surface/80 p-4 text-sm leading-7 text-ink outline-none transition placeholder:text-muted/70 focus:border-accent" />
-              </div>
-
-              {/* Semantic analysis */}
-              <article className="rounded-[1.6rem] border border-line bg-surface/88 p-5" role="status" aria-label="Draft safety analysis">
+              <article className="rounded-lg border border-line bg-card/92 p-5 shadow-soft">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="font-mono text-[0.72rem] font-bold uppercase tracking-[0.22em] text-muted">Semantic analysis</p>
-                    <h3 className="mt-2 font-display text-3xl tracking-[-0.03em]">Tone and offensiveness review</h3>
+                    <p className="font-mono text-xs font-bold uppercase text-accent">{selectedProject.label}</p>
+                    <h2 className="mt-2 text-2xl font-black leading-tight text-ink sm:text-3xl">{selectedProject.title}</h2>
+                    <p className="mt-2 font-mono text-xs uppercase text-muted">{selectedProject.duration}</p>
                   </div>
-                  <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold ${draftAnalysis.blocked ? "bg-[#f7d6cd]" : "bg-[#d7efe2]"} ${safetyTone}`}>
-                    {draftAnalysis.blocked ? <ShieldAlert size={16} /> : <ShieldCheck size={16} />}
-                    {draftAnalysis.blocked ? "Blocked" : "Safe to draft"}
-                  </div>
+                  <span className="rounded-md border border-line bg-command px-3 py-2 font-mono text-xs text-muted">
+                    {selectedProject.command}
+                  </span>
                 </div>
+                <p className="mt-5 text-base leading-8 text-muted">{selectedProject.summary}</p>
                 <div className="mt-5 grid gap-3 md:grid-cols-3">
-                  <AnalysisStat label="Offensiveness" value={`${draftAnalysis.offensivenessPercent}%`} hint={`Must stay below ${thresholdPercent}%`} />
-                  <AnalysisStat label="Professional tone" value={`${draftAnalysis.professionalTonePercent}%`} hint="Greeting, intent, and tone signals" />
-                  <AnalysisStat label="Draft readiness" value={`${draftAnalysis.readinessPercent}%`} hint="Completeness of subject and message" />
+                  <ProofBlock label="Problem" value={selectedProject.problem} />
+                  <ProofBlock label="My part" value={selectedProject.contribution} />
+                  <ProofBlock label="Result" value={selectedProject.impact} strong />
                 </div>
-                <div className="mt-5">
-                  <div className="relative h-3 rounded-full bg-command/80">
-                    <div className={`h-3 rounded-full transition-all ${draftAnalysis.blocked ? "bg-[#cb5d38]" : "bg-[#2f8a59]"}`} style={{ width: `${Math.min(draftAnalysis.offensivenessPercent, 100)}%` }} />
-                    <div className="pointer-events-none absolute inset-y-[-3px] w-[2px] bg-ink/80" style={{ left: `${thresholdPercent}%` }} aria-hidden="true" />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-xs text-muted">
-                    <span>0%</span><span>Block threshold {thresholdPercent}%</span><span>100%</span>
-                  </div>
-                </div>
-                <div className="mt-5 rounded-[1.2rem] border border-line bg-card/70 p-4">
-                  <p className="text-sm font-semibold">Draft guidance</p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-sm leading-6">
-                    {(draftAnalysis.guidance.length > 0 ? draftAnalysis.guidance : ["Draft is respectful and can be opened in the mail client."]).map((item) => (
-                      <p key={item} className="rounded-full bg-surface/80 px-3 py-2 text-muted">{item}</p>
-                    ))}
-                    <SignalChip label="Has intent" active={draftAnalysis.intentDetected} />
-                    <SignalChip label="Name included" active={draftAnalysis.completeness.hasName} />
-                    <SignalChip label="Valid reply email" active={draftAnalysis.completeness.hasEmail} />
-                    <SignalChip label="Subject included" active={draftAnalysis.completeness.hasSubject} />
-                    <SignalChip label="Message present" active={draftAnalysis.completeness.hasMessage} />
-                  </div>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {selectedProject.tech.map((item) => (
+                    <span key={item} className="rounded-md border border-line bg-command px-3 py-2 text-xs font-semibold text-muted">
+                      {item}
+                    </span>
+                  ))}
                 </div>
               </article>
+            </div>
+          </section>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className={`text-sm leading-6 ${notice ? "text-ink" : "text-muted"}`}>
-                  {notice || `${composer.message.length} characters drafted. Physical typing and the on-screen typewriter both update the message.`}
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={() => { setComposer({ name: "", email: "", subject: "", message: "" }); setNotice(""); }} className="rounded-full border border-line bg-surface px-4 py-3 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent">
-                    Clear draft
-                  </button>
-                  <button type="submit" disabled={draftAnalysis.blocked || !composer.message.trim()} className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-bold transition ${draftAnalysis.blocked || !composer.message.trim() ? "cursor-not-allowed bg-line text-muted" : "bg-accent text-card hover:brightness-95"}`}>
-                    Open email draft <Send size={16} />
+          <section ref={workRef} className="scroll-mt-6">
+            <SectionHeader
+              eyebrow="Experience"
+              title="Production work, not just portfolio demos."
+              copy="Most of my work has been inside banking workflows where small mistakes turn into support calls, audit questions, or blocked operations."
+            />
+            <div className="mt-5 grid gap-4">
+              {work.map((item) => (
+                <article key={item.company} className="rounded-lg border border-line bg-card/92 p-5 shadow-soft">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 className="text-xl font-black text-ink">{item.role}</h3>
+                      <p className="mt-1 font-mono text-sm text-accent">{item.company}</p>
+                    </div>
+                    <p className="font-mono text-xs uppercase text-muted">{item.period}</p>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    {item.bullets.map((bullet) => (
+                      <p key={bullet} className="rounded-md border border-line bg-surface/78 px-4 py-3 text-sm leading-7 text-muted">
+                        {bullet}
+                      </p>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section ref={skillsRef} className="scroll-mt-6">
+            <SectionHeader
+              eyebrow="Stack"
+              title="Tools I have actually used to ship backend systems."
+              copy="The list is intentionally grouped by how I use the tools, not by keyword stuffing."
+            />
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {skills.map((group) => (
+                <article key={group.group} className="rounded-lg border border-line bg-card/92 p-4">
+                  <p className="font-mono text-xs font-bold uppercase text-accent">{group.group}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {group.items.map((item) => (
+                      <span key={item} className="rounded-md bg-command px-2.5 py-2 text-xs font-semibold text-muted">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section ref={contactRef} className="scroll-mt-6">
+            <SectionHeader
+              eyebrow="Contact"
+              title="Reach out directly, or use the terminal prompt."
+              copy="If you want the fastest route, send the message from here. If you like the concept, run `contact` in the console."
+            />
+            <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="grid gap-3">
+                <ContactLink icon={<Mail size={18} />} label="Email" value={profile.email} href={`mailto:${profile.email}`} />
+                <ContactLink icon={<Phone size={18} />} label="Phone" value={profile.phone} href={`tel:${profile.phone.replace(/\s/g, "")}`} />
+                <ContactLink icon={<Linkedin size={18} />} label="LinkedIn" value="nishant-bhadke-983837185" href={profile.linkedin} />
+              </div>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  openDraftEmail();
+                }}
+                className="rounded-lg border border-line bg-card/92 p-5 shadow-soft"
+              >
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <InputField label="Name" value={composer.name} onChange={(value) => setComposer((current) => ({ ...current, name: value }))} />
+                  <InputField label="Email" value={composer.email} onChange={(value) => setComposer((current) => ({ ...current, email: value }))} type="email" />
+                </div>
+                <div className="mt-3">
+                  <InputField label="Subject" value={composer.subject} onChange={(value) => setComposer((current) => ({ ...current, subject: value }))} />
+                </div>
+                <label className="mt-3 block text-sm font-bold text-ink" htmlFor="message">
+                  Message
+                </label>
+                <textarea
+                  id="message"
+                  value={composer.message}
+                  onChange={(event) => setComposer((current) => ({ ...current, message: event.target.value }))}
+                  className="mt-2 min-h-36 w-full rounded-md border border-line bg-surface px-3 py-3 text-sm leading-7 text-ink outline-none focus:border-accent"
+                  placeholder="Hi Nishant, I saw your banking platform work and wanted to talk about..."
+                />
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs leading-5 text-muted">
+                    {notice || `Tone check: ${draftAnalysis.blocked ? "rewrite needed" : "clear"}; readiness ${draftAnalysis.readinessPercent}%.`}
+                  </p>
+                  <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-3 text-sm font-black text-[#1b1609] transition hover:bg-accentSoft">
+                    Draft email <Send size={16} />
                   </button>
                 </div>
-              </div>
-            </form>
+              </form>
+            </div>
+          </section>
+        </div>
 
-            <Suspense fallback={<div className="mt-5 h-64 animate-pulse rounded-[1.8rem] bg-command/60" />}>
-              <TypewriterKeyboard pressedKey={pressedKey} typeKey={typeKey} />
-            </Suspense>
-          </SectionShell>
-        </section>
-
-        <Footer />
+        <aside
+          className={`z-20 ${
+            dockMode === "right"
+              ? "lg:sticky lg:top-5 lg:h-[calc(100vh-40px)]"
+              : dockMode === "bottom"
+                ? "fixed inset-x-3 bottom-3"
+                : "lg:order-first"
+          }`}
+        >
+          <CommandConsole
+            activeSection={activeSection}
+            contactFlow={contactFlow}
+            dockMode={dockMode}
+            history={history}
+            input={input}
+            inputRef={inputRef}
+            outputRef={outputRef}
+            runCommand={runCommand}
+            setDockMode={setDockMode}
+            setInput={setInput}
+            submitCommand={submitCommand}
+          />
+        </aside>
       </div>
     </main>
+  );
+}
+
+function HeroSection({
+  overviewRef,
+  runCommand
+}: {
+  overviewRef: React.RefObject<HTMLElement | null>;
+  runCommand: (command?: string) => void;
+}) {
+  return (
+    <motion.section
+      ref={overviewRef}
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      className="min-h-[88vh] scroll-mt-6 py-8 sm:py-12"
+    >
+      <div className="grid min-h-[76vh] items-center gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div>
+          <p className="font-mono text-sm font-bold uppercase text-accent">Hello, I am Nishant Bhadke</p>
+          <h1 className="mt-5 max-w-4xl text-4xl font-black leading-tight text-ink sm:text-6xl">
+            Backend engineer for banking workflows that cannot afford guesswork.
+          </h1>
+          <p className="mt-5 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <button onClick={() => runCommand("projects")} className="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-3 text-sm font-black text-[#1b1609] transition hover:bg-accentSoft">
+              View projects <ArrowDown size={16} />
+            </button>
+            <button onClick={() => runCommand("download resume")} className="inline-flex items-center gap-2 rounded-md border border-line bg-card px-5 py-3 text-sm font-bold text-ink transition hover:border-accent">
+              Resume <Download size={16} />
+            </button>
+          </div>
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            <HeroStat icon={<BriefcaseBusiness size={18} />} label="Role" value={profile.role} />
+            <HeroStat icon={<Wrench size={18} />} label="Core lane" value="APIs, SQL, BFSI flows" />
+            <HeroStat icon={<MapPin size={18} />} label="Location" value={profile.location} />
+          </div>
+        </div>
+        <Mascot />
+      </div>
+    </motion.section>
+  );
+}
+
+function CommandConsole({
+  activeSection,
+  contactFlow,
+  dockMode,
+  history,
+  input,
+  inputRef,
+  outputRef,
+  runCommand,
+  setDockMode,
+  setInput,
+  submitCommand
+}: {
+  activeSection: SectionKey;
+  contactFlow: ContactFlow | null;
+  dockMode: DockMode;
+  history: HistoryEntry[];
+  input: string;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  outputRef: React.RefObject<HTMLDivElement | null>;
+  runCommand: (command?: string) => void;
+  setDockMode: (mode: DockMode) => void;
+  setInput: (value: string) => void;
+  submitCommand: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  const quickCommands = contactFlow ? ["cancel"] : ["about", "projects", "rbl-bcms", "skills", "contact", "download resume"];
+
+  return (
+    <div className="rounded-lg border border-line bg-card/96 p-4 shadow-soft backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Terminal size={18} className="text-accent" />
+          <div>
+            <p className="font-mono text-xs font-bold uppercase text-accent">Command console</p>
+            <p className="text-xs text-muted">active: {activeSection}</p>
+          </div>
+        </div>
+        <div className="flex rounded-md border border-line bg-surface p-1" aria-label="Console dock controls">
+          {(["right", "bottom", "wide"] as DockMode[]).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setDockMode(mode)}
+              className={`rounded px-2 py-1 font-mono text-[0.68rem] uppercase ${dockMode === mode ? "bg-accent text-[#1b1609]" : "text-muted"}`}
+            >
+              {mode}
+            </button>
+          ))}
+        </div>
+      </div>
+      <form onSubmit={submitCommand} className="mt-4 rounded-md border border-line bg-[#141106] p-3">
+        <div className="flex items-center gap-2">
+          <span className="shrink-0 font-mono text-sm font-bold text-accent">{promptFor(contactFlow)}</span>
+          <input
+            ref={inputRef}
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            className="min-w-0 flex-1 bg-transparent font-mono text-sm text-[#ffe69a] outline-none placeholder:text-[#9c8542]"
+            placeholder={contactFlow ? "type your answer" : "projects, search redis, contact"}
+            spellCheck={false}
+            autoComplete="off"
+          />
+          <button type="submit" className="rounded bg-accent px-3 py-2 text-xs font-black text-[#1b1609]">
+            Run
+          </button>
+        </div>
+      </form>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {quickCommands.map((command) => (
+          <button
+            key={command}
+            type="button"
+            onClick={() => runCommand(command)}
+            className="rounded-md border border-line bg-surface px-2.5 py-2 font-mono text-xs text-muted transition hover:border-accent hover:text-ink"
+          >
+            {command}
+          </button>
+        ))}
+      </div>
+      <div ref={outputRef} className="mt-4 max-h-[48vh] overflow-y-auto rounded-md border border-line bg-[#141106] p-3" role="log" aria-live="polite">
+        {history.length === 0 ? (
+          <p className="font-mono text-xs leading-6 text-[#9c8542]">Console cleared.</p>
+        ) : (
+          history.map((entry) => (
+            <div key={entry.id} className="border-b border-[#3c3214] py-2 last:border-0">
+              <p className="font-mono text-xs text-accent">$ {entry.command}</p>
+              <p className="mt-1 text-sm leading-6 text-[#ffe69a]">{entry.response}</p>
+            </div>
+          ))
+        )}
+      </div>
+      <div className="mt-3 flex items-center gap-2 text-xs text-muted">
+        <Grip size={14} />
+        <span>Dock it right, bottom, or wide. Every command scrolls to the result.</span>
+      </div>
+    </div>
+  );
+}
+
+function Mascot() {
+  return (
+    <div className="mx-auto w-full max-w-xs rounded-lg border border-line bg-card/92 p-5 shadow-soft">
+      <div className="mx-auto w-44 rounded-lg border border-line bg-[#151107] p-4">
+        <div className="mx-auto h-5 w-24 rounded-t-full bg-accent" />
+        <div className="relative mx-auto mt-1 h-32 w-36 rounded-lg border-4 border-[#3b3318] bg-[#ffdb62]">
+          <div className="absolute left-5 top-8 h-5 w-5 rounded-full bg-[#191408]" />
+          <div className="absolute right-5 top-8 h-5 w-5 rounded-full bg-[#191408]" />
+          <div className="absolute left-1/2 top-16 h-3 w-16 -translate-x-1/2 rounded-full bg-[#191408]" />
+          <div className="absolute -left-4 top-10 h-8 w-3 rounded bg-accent" />
+          <div className="absolute -right-4 top-10 h-8 w-3 rounded bg-accent" />
+        </div>
+        <div className="mx-auto mt-3 h-10 w-28 rounded-lg border border-line bg-command" />
+      </div>
+      <p className="mt-4 text-center font-mono text-xs leading-6 text-muted">
+        NishBot keeps the console tidy. He likes yellow alerts, readable logs, and APIs that return before coffee gets cold.
+      </p>
+    </div>
+  );
+}
+
+function SectionHeader({ eyebrow, title, copy }: { eyebrow: string; title: string; copy: string }) {
+  return (
+    <div>
+      <p className="font-mono text-xs font-black uppercase text-accent">{eyebrow}</p>
+      <h2 className="mt-2 max-w-4xl text-3xl font-black leading-tight text-ink sm:text-4xl">{title}</h2>
+      <p className="mt-3 max-w-3xl text-base leading-7 text-muted">{copy}</p>
+    </div>
+  );
+}
+
+function HeroStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-line bg-card/90 p-4">
+      <div className="text-accent">{icon}</div>
+      <p className="mt-3 font-mono text-xs uppercase text-muted">{label}</p>
+      <p className="mt-1 text-sm font-black text-ink">{value}</p>
+    </div>
+  );
+}
+
+function ProofBlock({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div className={`rounded-lg border border-line p-4 ${strong ? "bg-accent text-[#1b1609]" : "bg-surface/82 text-muted"}`}>
+      <p className={`font-mono text-xs font-black uppercase ${strong ? "text-[#3f3107]" : "text-accent"}`}>{label}</p>
+      <p className="mt-2 text-sm font-semibold leading-7">{value}</p>
+    </div>
+  );
+}
+
+function ContactLink({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href: string }) {
+  return (
+    <a href={href} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noreferrer" : undefined} className="flex items-center gap-3 rounded-lg border border-line bg-card/92 p-4 text-ink transition hover:border-accent">
+      <span className="text-accent">{icon}</span>
+      <span>
+        <span className="block font-mono text-xs uppercase text-muted">{label}</span>
+        <span className="block break-all text-sm font-bold">{value}</span>
+      </span>
+    </a>
+  );
+}
+
+function InputField({
+  label,
+  value,
+  onChange,
+  type = "text"
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+}) {
+  const id = label.toLowerCase();
+
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-bold text-ink">
+        {label}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 w-full rounded-md border border-line bg-surface px-3 py-3 text-sm text-ink outline-none focus:border-accent"
+      />
+    </div>
   );
 }

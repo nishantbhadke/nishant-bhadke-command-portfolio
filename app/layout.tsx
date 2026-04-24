@@ -5,12 +5,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://nishantbhadke.githu
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Nishant Bhadke | .NET Backend Engineer Portfolio",
+  title: "Nishant Bhadke | Backend Engineer Portfolio",
   description:
-    "Command-driven portfolio for Nishant Bhadke — .NET Backend Engineer focused on BFSI platforms, secure APIs, SQL Server, Redis, AWS, and Docker.",
+    "A command-driven portfolio for Nishant Bhadke, a backend engineer building BFSI APIs, SQL-heavy workflows, Redis performance improvements, and maker-checker systems.",
   openGraph: {
-    title: "Nishant Bhadke | .NET Backend Engineer Portfolio",
-    description: "Command-driven portfolio for backend engineering work across BFSI systems, with a guarded contact composer.",
+    title: "Nishant Bhadke | Backend Engineer Portfolio",
+    description: "Command-driven portfolio for backend engineering work across BFSI systems.",
     url: siteUrl,
     siteName: "Nishant Bhadke Portfolio",
     locale: "en_IN",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nishant Bhadke | .NET Backend Engineer Portfolio",
+    title: "Nishant Bhadke | Backend Engineer Portfolio",
     description: "Command-driven portfolio for backend engineering work across BFSI systems."
   },
   robots: {
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     canonical: siteUrl
   },
   other: {
-    "theme-color": "#f6efe5"
+    "theme-color": "#0b0b09"
   }
 };
 
