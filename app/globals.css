@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -21,9 +23,11 @@ body {
   margin: 0;
   background: #f6efe5;
   color: #231913;
-  font-family: Aptos, "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-family: 'Inter', Aptos, "Segoe UI Variable", "Segoe UI", sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
@@ -49,6 +53,40 @@ textarea:focus-visible {
   outline-offset: 3px;
 }
 
+/* ── Skip link ── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 9999;
+  padding: 12px 24px;
+  background: #bd6f41;
+  color: #fbf5ec;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 0 0 12px 12px;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ── Screen-reader only ── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ── Scrollbar ── */
 * {
   scrollbar-color: #9f876c #efe4d3;
   scrollbar-width: thin;
@@ -69,6 +107,7 @@ textarea:focus-visible {
   border-radius: 999px;
 }
 
+/* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

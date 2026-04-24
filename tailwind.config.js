@@ -19,7 +19,7 @@ module.exports = {
         accentSoft: "#6f8fb2"
       },
       fontFamily: {
-        sans: ["Aptos", "Segoe UI Variable", "Segoe UI", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["Inter", "Aptos", "Segoe UI Variable", "Segoe UI", "ui-sans-serif", "system-ui", "sans-serif"],
         display: ["Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Georgia", "serif"],
         mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Consolas", "monospace"]
       },

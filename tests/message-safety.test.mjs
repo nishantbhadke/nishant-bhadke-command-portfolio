@@ -4,7 +4,7 @@ import {
   analyzeContactDraft,
   analyzeMessageSafety,
   normalizeForAnalysis
-} from "../lib/messageSafety.js";
+} from "../lib/messageSafety.ts";
 
 function run(name, testCase) {
   try {

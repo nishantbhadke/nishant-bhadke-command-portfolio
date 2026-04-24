@@ -1,8 +1,38 @@
-// @ts-check
-
 export const OFFENSIVE_THRESHOLD = 0.65;
 
-const substitutionMap = {
+export interface SafetyAnalysis {
+  blocked: boolean;
+  normalized: string;
+  offensiveness: number;
+  offensivenessPercent: number;
+  reasons: string[];
+  wordCount: number;
+}
+
+export interface ContactDraft {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+export interface DraftCompleteness {
+  hasName: boolean;
+  hasEmail: boolean;
+  hasSubject: boolean;
+  hasMessage: boolean;
+}
+
+export interface DraftAnalysis extends SafetyAnalysis {
+  completeness: DraftCompleteness;
+  guidance: string[];
+  intentDetected: boolean;
+  professionalTonePercent: number;
+  readinessPercent: number;
+  readyToSend: boolean;
+}
+
+const substitutionMap: Record<string, string> = {
   "0": "o",
   "1": "i",
   "3": "e",
@@ -13,8 +43,7 @@ const substitutionMap = {
   "$": "s"
 };
 
-/** @type {Array<[string, number]>} */
-const offensivePhraseWeights = [
+const offensivePhraseWeights: Array<[string, number]> = [
   ["shut up", 0.23],
   ["get lost", 0.2],
   ["go away", 0.18],
@@ -22,8 +51,7 @@ const offensivePhraseWeights = [
   ["piece of trash", 0.48]
 ];
 
-/** @type {Map<string, number>} */
-const offensiveTokenWeights = new Map([
+const offensiveTokenWeights = new Map<string, number>([
   ["idiot", 0.22],
   ["stupid", 0.2],
   ["moron", 0.28],
@@ -40,14 +68,11 @@ const professionalSignals = ["hello", "hi", "thanks", "thank", "regards", "discu
 
 const intentSignals = ["connect", "discuss", "opportunity", "project", "role", "collaborate", "interview", "portfolio"];
 
-/**
- * @param {string} value
- */
-export function normalizeForAnalysis(value) {
+export function normalizeForAnalysis(value: string): string {
   const substituted = value
     .toLowerCase()
     .split("")
-    .map((character) => substitutionMap[/** @type {keyof typeof substitutionMap} */ (character)] ?? character)
+    .map((character) => substitutionMap[character] ?? character)
     .join("");
 
   return substituted
@@ -56,22 +81,15 @@ export function normalizeForAnalysis(value) {
     .trim();
 }
 
-/**
- * @param {string} value
- */
-function tokenise(value) {
+function tokenise(value: string): string[] {
   const normalized = normalizeForAnalysis(value);
   return normalized ? normalized.split(" ") : [];
 }
 
-/**
- * @param {string} value
- */
-export function analyzeMessageSafety(value) {
+export function analyzeMessageSafety(value: string): SafetyAnalysis {
   const normalized = normalizeForAnalysis(value);
   const tokens = normalized ? normalized.split(" ") : [];
-  /** @type {string[]} */
-  const reasons = [];
+  const reasons: string[] = [];
   let score = 0;
 
   if (!normalized) {
@@ -92,7 +110,7 @@ export function analyzeMessageSafety(value) {
     }
   }
 
-  const countedTokens = new Set();
+  const countedTokens = new Set<string>();
 
   for (const token of tokens) {
     const weight = offensiveTokenWeights.get(token);
@@ -131,10 +149,7 @@ export function analyzeMessageSafety(value) {
   };
 }
 
-/**
- * @param {{ name: string; email: string; subject: string; message: string }} draft
- */
-export function analyzeContactDraft(draft) {
+export function analyzeContactDraft(draft: ContactDraft): DraftAnalysis {
   const combined = `${draft.subject} ${draft.message}`.trim();
   const safety = analyzeMessageSafety(combined);
   const messageTokens = tokenise(draft.message);
@@ -142,7 +157,7 @@ export function analyzeContactDraft(draft) {
   const allTokens = [...subjectTokens, ...messageTokens];
   const professionalMatches = professionalSignals.filter((signal) => allTokens.includes(signal)).length;
   const intentDetected = intentSignals.some((signal) => allTokens.includes(signal));
-  const completeness = {
+  const completeness: DraftCompleteness = {
     hasName: draft.name.trim().length > 1,
     hasEmail: /\S+@\S+\.\S+/.test(draft.email.trim()),
     hasSubject: draft.subject.trim().length > 2,
@@ -168,8 +183,7 @@ export function analyzeContactDraft(draft) {
 
   const readinessPercent = Math.round(readiness * 100);
   const tonePercent = Math.max(12, Math.min(100, 40 + professionalMatches * 15 - safety.offensivenessPercent));
-  /** @type {string[]} */
-  const guidance = [];
+  const guidance: string[] = [];
 
   if (!completeness.hasName) {
     guidance.push("Add your name so the outreach feels personal.");
