@@ -87,7 +87,7 @@ export function CommandPortfolio() {
     }
   ]);
   const [dockMode, setDockMode] = useState<DockMode>("right");
-  const [isConsoleHeader, setIsConsoleHeader] = useState(false);
+  const [consoleHeaderProgress, setConsoleHeaderProgress] = useState(0);
   const [contactFlow, setContactFlow] = useState<ContactFlow | null>(null);
   const [notice, setNotice] = useState("");
   const [composer, setComposer] = useState<ContactDraft>({ name: "", email: "", subject: "", message: "" });
@@ -123,10 +123,8 @@ export function CommandPortfolio() {
 
     const updateConsoleMode = () => {
       const scrollY = window.scrollY;
-      setIsConsoleHeader((current) => {
-        const shouldUseHeader = current ? scrollY > 64 : scrollY > 150;
-        return current === shouldUseHeader ? current : shouldUseHeader;
-      });
+      const nextProgress = Math.min(1, Math.max(0, (scrollY - 80) / 140));
+      setConsoleHeaderProgress((current) => (Math.abs(current - nextProgress) < 0.015 ? current : nextProgress));
       ticking = false;
     };
 
@@ -325,6 +323,8 @@ export function CommandPortfolio() {
   }
 
   const selectedProject = projects[projectIndex];
+  const isConsoleHeader = consoleHeaderProgress > 0.92;
+  const showFloatingConsole = consoleHeaderProgress > 0.02;
   const shellClass =
     dockMode === "right"
       ? "lg:grid-cols-[minmax(0,1fr)_410px]"
@@ -336,6 +336,33 @@ export function CommandPortfolio() {
     <main id="main-content" className="min-h-screen bg-paper text-ink">
       <div className="ambient-wash pointer-events-none fixed inset-0" />
       <div className="ambient-grid pointer-events-none fixed inset-0" />
+
+      <div
+        className="console-floating-shell fixed inset-x-3 top-3 z-50 lg:inset-x-6"
+        style={{
+          opacity: consoleHeaderProgress,
+          pointerEvents: isConsoleHeader ? "auto" : "none",
+          transform: `translate3d(0, ${Math.round((1 - consoleHeaderProgress) * -16)}px, 0) scale(${0.985 + consoleHeaderProgress * 0.015})`
+        }}
+        aria-hidden={!showFloatingConsole}
+      >
+        <div className="mx-auto max-w-7xl">
+          <CommandConsole
+            activeSection={activeSection}
+            contactFlow={contactFlow}
+            dockMode={dockMode}
+            history={history}
+            input={input}
+            inputRef={isConsoleHeader ? inputRef : null}
+            isHeaderMode
+            outputRef={outputRef}
+            runCommand={runCommand}
+            setDockMode={setDockMode}
+            setInput={setInput}
+            submitCommand={submitCommand}
+          />
+        </div>
+      </div>
 
       <div className={`relative mx-auto grid w-full max-w-7xl gap-6 px-4 py-5 sm:px-6 lg:px-8 ${shellClass}`}>
         <div className="grid min-w-0 gap-6">
@@ -504,20 +531,23 @@ export function CommandPortfolio() {
 
         <aside
           className={`console-dock-shell z-20 ${
-            isConsoleHeader
-              ? "fixed inset-x-3 top-3 z-50 lg:inset-x-6"
-              : dockMode === "right"
+            dockMode === "right"
               ? "lg:sticky lg:top-5 lg:h-[calc(100vh-40px)]"
               : dockMode === "bottom"
                 ? "fixed inset-x-3 bottom-3"
                 : "lg:order-first"
           }`}
+          style={{
+            opacity: 1 - consoleHeaderProgress,
+            pointerEvents: isConsoleHeader ? "none" : "auto",
+            transform: `translate3d(0, ${Math.round(consoleHeaderProgress * 8)}px, 0)`,
+            filter: `blur(${consoleHeaderProgress * 2}px)`
+          }}
+          aria-hidden={isConsoleHeader}
         >
           <div
             className={
-              isConsoleHeader
-                ? "mx-auto max-w-7xl"
-                : dockMode === "wide"
+              dockMode === "wide"
                   ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]"
                   : "grid gap-4"
             }
@@ -527,9 +557,9 @@ export function CommandPortfolio() {
               contactFlow={contactFlow}
               dockMode={dockMode}
               history={history}
-              isHeaderMode={isConsoleHeader}
               input={input}
-              inputRef={inputRef}
+              inputRef={isConsoleHeader ? null : inputRef}
+              isHeaderMode={false}
               outputRef={outputRef}
               runCommand={runCommand}
               setDockMode={setDockMode}
@@ -537,7 +567,7 @@ export function CommandPortfolio() {
               submitCommand={submitCommand}
             />
             <AnimatePresence initial={false}>
-              {!isConsoleHeader && <Mascot dockMode={dockMode} />}
+              <Mascot dockMode={dockMode} />
             </AnimatePresence>
           </div>
         </aside>
@@ -610,7 +640,7 @@ function CommandConsole({
   history: HistoryEntry[];
   isHeaderMode: boolean;
   input: string;
-  inputRef: React.RefObject<HTMLInputElement | null>;
+  inputRef: React.RefObject<HTMLInputElement | null> | null;
   outputRef: React.RefObject<HTMLDivElement | null>;
   runCommand: (command?: string) => void;
   setDockMode: (mode: DockMode) => void;

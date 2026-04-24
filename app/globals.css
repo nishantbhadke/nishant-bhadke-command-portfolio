@@ -54,8 +54,44 @@ body {
 .console-dock-shell {
   will-change: transform, opacity, filter;
   transition:
-    filter 280ms ease,
-    opacity 280ms ease;
+    filter 90ms linear,
+    opacity 90ms linear,
+    transform 90ms linear;
+}
+
+.console-floating-shell {
+  isolation: isolate;
+  will-change: transform, opacity;
+  transition:
+    opacity 80ms linear,
+    transform 80ms linear;
+}
+
+.console-floating-shell::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  z-index: 0;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(8, 7, 4, 0.9), rgba(15, 12, 5, 0.76)),
+    radial-gradient(circle at 50% 0%, rgba(245, 189, 53, 0.16), transparent 42%);
+  border: 1px solid rgba(245, 189, 53, 0.18);
+  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(26px) saturate(145%);
+  -webkit-backdrop-filter: blur(26px) saturate(145%);
+}
+
+.console-floating-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.console-floating-shell .console-panel {
+  background: rgba(12, 10, 5, 0.98);
+  box-shadow:
+    0 18px 54px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(245, 189, 53, 0.08);
 }
 
 .section-shell {
