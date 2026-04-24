@@ -326,9 +326,7 @@ export function CommandPortfolio() {
 
   const selectedProject = projects[projectIndex];
   const shellClass =
-    isConsoleHeader
-      ? "console-header-layout lg:grid-cols-1"
-      : dockMode === "right"
+    dockMode === "right"
       ? "lg:grid-cols-[minmax(0,1fr)_410px]"
       : dockMode === "wide"
         ? "lg:grid-cols-1"
@@ -504,9 +502,7 @@ export function CommandPortfolio() {
           </section>
         </div>
 
-        <motion.aside
-          layout
-          transition={{ type: "spring", stiffness: 260, damping: 32, mass: 0.8 }}
+        <aside
           className={`console-dock-shell z-20 ${
             isConsoleHeader
               ? "fixed inset-x-3 top-3 z-50 lg:inset-x-6"
@@ -544,7 +540,7 @@ export function CommandPortfolio() {
               {!isConsoleHeader && <Mascot dockMode={dockMode} />}
             </AnimatePresence>
           </div>
-        </motion.aside>
+        </aside>
       </div>
     </main>
   );
@@ -660,16 +656,19 @@ function CommandConsole({
     </form>
   );
 
-  if (isHeaderMode) {
-    return (
-      <motion.div
-        layoutId="command-console-panel"
-        initial={{ opacity: 0, y: -18, scale: 0.985, filter: "blur(4px)" }}
-        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-        exit={{ opacity: 0, y: -10, scale: 0.985, filter: "blur(4px)" }}
-        transition={{ type: "spring", stiffness: 300, damping: 34, mass: 0.75 }}
-        className="console-panel console-header rounded-xl border border-line bg-card/96 p-3 shadow-soft backdrop-blur-xl"
-      >
+  return (
+    <motion.div
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      initial={{ opacity: 0, y: isHeaderMode ? -8 : 8, scale: 0.995, filter: "blur(2px)" }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      className={`console-panel ${
+        isHeaderMode
+          ? "console-header rounded-xl border border-line bg-card/96 p-3 shadow-soft backdrop-blur-xl"
+          : "rounded-lg border border-line bg-card/96 p-4 shadow-soft backdrop-blur-xl"
+      }`}
+    >
+      {isHeaderMode ? (
+        <>
         <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
           <div className="flex items-center gap-2">
             <Terminal size={18} className="text-accent" />
@@ -682,58 +681,50 @@ function CommandConsole({
           {dockControls}
         </div>
         <p className="mt-2 truncate font-mono text-[0.72rem] text-muted">last: {latestResponse}</p>
-      </motion.div>
-    );
-  }
-
-  return (
-    <motion.div
-      layoutId="command-console-panel"
-      initial={{ opacity: 0, y: 14, scale: 0.99, filter: "blur(3px)" }}
-      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-      exit={{ opacity: 0, y: 10, scale: 0.99, filter: "blur(3px)" }}
-      transition={{ type: "spring", stiffness: 280, damping: 32, mass: 0.8 }}
-      className="console-panel rounded-lg border border-line bg-card/96 p-4 shadow-soft backdrop-blur-xl"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Terminal size={18} className="text-accent" />
-          <div>
-            <p className="font-mono text-xs font-bold uppercase text-accent">Command console</p>
-            <p className="text-xs text-muted">active: {activeSection}</p>
-          </div>
-        </div>
-        {dockControls}
-      </div>
-      {commandForm("console-screen mt-4 rounded-md border border-line bg-[#141106] p-3")}
-      <div className="mt-3 flex flex-wrap gap-2">
-        {quickCommands.map((command) => (
-          <button
-            key={command}
-            type="button"
-            onClick={() => runCommand(command)}
-            className="command-chip rounded-md border border-line bg-surface px-2.5 py-2 font-mono text-xs text-muted transition hover:border-accent hover:text-ink"
-          >
-            {command}
-          </button>
-        ))}
-      </div>
-      <div ref={outputRef} className="console-screen mt-4 max-h-[48vh] overflow-y-auto rounded-md border border-line bg-[#141106] p-3" role="log" aria-live="polite">
-        {history.length === 0 ? (
-          <p className="font-mono text-xs leading-6 text-[#9c8542]">Console cleared.</p>
-        ) : (
-          history.map((entry) => (
-            <div key={entry.id} className="history-entry border-b border-[#3c3214] py-2 last:border-0">
-              <p className="font-mono text-xs text-accent">$ {entry.command}</p>
-              <p className="mt-1 text-sm leading-6 text-[#ffe69a]">{entry.response}</p>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Terminal size={18} className="text-accent" />
+              <div>
+                <p className="font-mono text-xs font-bold uppercase text-accent">Command console</p>
+                <p className="text-xs text-muted">active: {activeSection}</p>
+              </div>
             </div>
-          ))
-        )}
-      </div>
-      <div className="mt-3 flex items-center gap-2 text-xs text-muted">
-        <Grip size={14} />
-        <span>Dock it right, bottom, or wide. Every command scrolls to the result.</span>
-      </div>
+            {dockControls}
+          </div>
+          {commandForm("console-screen mt-4 rounded-md border border-line bg-[#141106] p-3")}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {quickCommands.map((command) => (
+              <button
+                key={command}
+                type="button"
+                onClick={() => runCommand(command)}
+                className="command-chip rounded-md border border-line bg-surface px-2.5 py-2 font-mono text-xs text-muted transition hover:border-accent hover:text-ink"
+              >
+                {command}
+              </button>
+            ))}
+          </div>
+          <div ref={outputRef} className="console-screen mt-4 max-h-[48vh] overflow-y-auto rounded-md border border-line bg-[#141106] p-3" role="log" aria-live="polite">
+            {history.length === 0 ? (
+              <p className="font-mono text-xs leading-6 text-[#9c8542]">Console cleared.</p>
+            ) : (
+              history.map((entry) => (
+                <div key={entry.id} className="history-entry border-b border-[#3c3214] py-2 last:border-0">
+                  <p className="font-mono text-xs text-accent">$ {entry.command}</p>
+                  <p className="mt-1 text-sm leading-6 text-[#ffe69a]">{entry.response}</p>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="mt-3 flex items-center gap-2 text-xs text-muted">
+            <Grip size={14} />
+            <span>Dock it right, bottom, or wide. Every command scrolls to the result.</span>
+          </div>
+        </>
+      )}
     </motion.div>
   );
 }
@@ -746,11 +737,10 @@ function Mascot({ dockMode }: { dockMode: DockMode }) {
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 16, scale: 0.98, filter: "blur(4px)" }}
-      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-      exit={{ opacity: 0, y: 12, scale: 0.96, filter: "blur(6px)" }}
-      transition={{ type: "spring", stiffness: 260, damping: 30, mass: 0.8 }}
+      initial={{ opacity: 0, y: 8, filter: "blur(2px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={{ opacity: 0, y: 8, filter: "blur(2px)" }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
       className={wrapperClass}
     >
       <div className={`${dockMode === "bottom" ? "w-20 shrink-0" : "mx-auto w-40"} rounded-lg border border-line bg-[#151107] p-3`}>
