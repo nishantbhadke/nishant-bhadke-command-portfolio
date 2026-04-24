@@ -309,14 +309,14 @@ export function CommandPortfolio() {
 
   return (
     <main id="main-content" className="min-h-screen bg-paper text-ink">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(245,189,53,0.16),transparent_32%),linear-gradient(180deg,rgba(11,11,9,0.92),rgba(15,14,10,0.98))]" />
-      <div className="pointer-events-none fixed inset-0 opacity-[0.12] [background-image:linear-gradient(rgba(255,217,102,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,217,102,0.12)_1px,transparent_1px)] [background-size:36px_36px]" />
+      <div className="ambient-wash pointer-events-none fixed inset-0" />
+      <div className="ambient-grid pointer-events-none fixed inset-0" />
 
       <div className={`relative mx-auto grid w-full max-w-7xl gap-6 px-4 py-5 sm:px-6 lg:px-8 ${shellClass}`}>
         <div className="grid min-w-0 gap-6">
           <HeroSection overviewRef={overviewRef} runCommand={runCommand} />
 
-          <section ref={projectsRef} className="scroll-mt-6">
+          <section ref={projectsRef} className="section-shell scroll-mt-6">
             <SectionHeader
               eyebrow="Selected work"
               title="Projects that had business rules, deadlines, and people depending on them."
@@ -332,7 +332,7 @@ export function CommandPortfolio() {
                       setProjectIndex(index);
                       setActiveSection("projects");
                     }}
-                    className={`min-w-64 rounded-lg border px-4 py-3 text-left transition lg:min-w-0 ${
+                    className={`project-tab min-w-64 rounded-lg border px-4 py-3 text-left transition lg:min-w-0 ${
                       index === projectIndex
                         ? "border-accent bg-accent text-[#1b1609]"
                         : "border-line bg-card/86 text-muted hover:border-accent hover:text-ink"
@@ -344,7 +344,13 @@ export function CommandPortfolio() {
                   </button>
                 ))}
               </div>
-              <article className="rounded-lg border border-line bg-card/92 p-5 shadow-soft">
+              <motion.article
+                key={selectedProject.id}
+                initial={{ opacity: 0, y: 16, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
+                className="project-detail-card rounded-lg border border-line bg-card/92 p-5 shadow-soft"
+              >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="font-mono text-xs font-bold uppercase text-accent">{selectedProject.label}</p>
@@ -368,11 +374,11 @@ export function CommandPortfolio() {
                     </span>
                   ))}
                 </div>
-              </article>
+              </motion.article>
             </div>
           </section>
 
-          <section ref={workRef} className="scroll-mt-6">
+          <section ref={workRef} className="section-shell scroll-mt-6">
             <SectionHeader
               eyebrow="Experience"
               title="Production work, not just portfolio demos."
@@ -380,7 +386,7 @@ export function CommandPortfolio() {
             />
             <div className="mt-5 grid gap-4">
               {work.map((item) => (
-                <article key={item.company} className="rounded-lg border border-line bg-card/92 p-5 shadow-soft">
+                <article key={item.company} className="interactive-card rounded-lg border border-line bg-card/92 p-5 shadow-soft">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h3 className="text-xl font-black text-ink">{item.role}</h3>
@@ -390,7 +396,7 @@ export function CommandPortfolio() {
                   </div>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {item.bullets.map((bullet) => (
-                      <p key={bullet} className="rounded-md border border-line bg-surface/78 px-4 py-3 text-sm leading-7 text-muted">
+                      <p key={bullet} className="soft-tile rounded-md border border-line bg-surface/78 px-4 py-3 text-sm leading-7 text-muted">
                         {bullet}
                       </p>
                     ))}
@@ -400,7 +406,7 @@ export function CommandPortfolio() {
             </div>
           </section>
 
-          <section ref={skillsRef} className="scroll-mt-6">
+          <section ref={skillsRef} className="section-shell scroll-mt-6">
             <SectionHeader
               eyebrow="Stack"
               title="Tools I have actually used to ship backend systems."
@@ -408,11 +414,11 @@ export function CommandPortfolio() {
             />
             <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {skills.map((group) => (
-                <article key={group.group} className="rounded-lg border border-line bg-card/92 p-4">
+                <article key={group.group} className="interactive-card rounded-lg border border-line bg-card/92 p-4">
                   <p className="font-mono text-xs font-bold uppercase text-accent">{group.group}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {group.items.map((item) => (
-                      <span key={item} className="rounded-md bg-command px-2.5 py-2 text-xs font-semibold text-muted">
+                      <span key={item} className="skill-chip rounded-md bg-command px-2.5 py-2 text-xs font-semibold text-muted">
                         {item}
                       </span>
                     ))}
@@ -422,7 +428,7 @@ export function CommandPortfolio() {
             </div>
           </section>
 
-          <section ref={contactRef} className="scroll-mt-6">
+          <section ref={contactRef} className="section-shell scroll-mt-6">
             <SectionHeader
               eyebrow="Contact"
               title="Reach out directly, or use the terminal prompt."
@@ -439,7 +445,7 @@ export function CommandPortfolio() {
                   event.preventDefault();
                   openDraftEmail();
                 }}
-                className="rounded-lg border border-line bg-card/92 p-5 shadow-soft"
+                className="interactive-card rounded-lg border border-line bg-card/92 p-5 shadow-soft"
               >
                 <div className="grid gap-3 sm:grid-cols-2">
                   <InputField label="Name" value={composer.name} onChange={(value) => setComposer((current) => ({ ...current, name: value }))} />
@@ -455,14 +461,14 @@ export function CommandPortfolio() {
                   id="message"
                   value={composer.message}
                   onChange={(event) => setComposer((current) => ({ ...current, message: event.target.value }))}
-                  className="mt-2 min-h-36 w-full rounded-md border border-line bg-surface px-3 py-3 text-sm leading-7 text-ink outline-none focus:border-accent"
+                  className="input-glow mt-2 min-h-36 w-full rounded-md border border-line bg-surface px-3 py-3 text-sm leading-7 text-ink outline-none focus:border-accent"
                   placeholder="Hi Nishant, I saw your banking platform work and wanted to talk about..."
                 />
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs leading-5 text-muted">
                     {notice || `Tone check: ${draftAnalysis.blocked ? "rewrite needed" : "clear"}; readiness ${draftAnalysis.readinessPercent}%.`}
                   </p>
-                  <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-3 text-sm font-black text-[#1b1609] transition hover:bg-accentSoft">
+                  <button type="submit" className="action-button inline-flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-3 text-sm font-black text-[#1b1609] transition hover:bg-accentSoft">
                     Draft email <Send size={16} />
                   </button>
                 </div>
@@ -528,10 +534,10 @@ function HeroSection({
           </p>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <button onClick={() => runCommand("projects")} className="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-3 text-sm font-black text-[#1b1609] transition hover:bg-accentSoft">
+            <button onClick={() => runCommand("projects")} className="action-button inline-flex items-center gap-2 rounded-md bg-accent px-5 py-3 text-sm font-black text-[#1b1609] transition hover:bg-accentSoft">
               View projects <ArrowDown size={16} />
             </button>
-            <button onClick={() => runCommand("download resume")} className="inline-flex items-center gap-2 rounded-md border border-line bg-card px-5 py-3 text-sm font-bold text-ink transition hover:border-accent">
+            <button onClick={() => runCommand("download resume")} className="secondary-action inline-flex items-center gap-2 rounded-md border border-line bg-card px-5 py-3 text-sm font-bold text-ink transition hover:border-accent">
               Resume <Download size={16} />
             </button>
           </div>
@@ -589,7 +595,7 @@ function CommandConsole({
               key={mode}
               type="button"
               onClick={() => setDockMode(mode)}
-              className={`rounded px-2 py-1 font-mono text-[0.68rem] uppercase ${dockMode === mode ? "bg-accent text-[#1b1609]" : "text-muted"}`}
+              className={`dock-button rounded px-2 py-1 font-mono text-[0.68rem] uppercase ${dockMode === mode ? "bg-accent text-[#1b1609]" : "text-muted"}`}
             >
               {mode}
             </button>
@@ -609,7 +615,7 @@ function CommandConsole({
             autoComplete="off"
           />
           <span aria-hidden="true" className="console-cursor" />
-          <button type="submit" className="rounded bg-accent px-3 py-2 text-xs font-black text-[#1b1609] transition hover:bg-accentSoft">
+          <button type="submit" className="action-button rounded bg-accent px-3 py-2 text-xs font-black text-[#1b1609] transition hover:bg-accentSoft">
             Run
           </button>
         </div>
@@ -620,7 +626,7 @@ function CommandConsole({
             key={command}
             type="button"
             onClick={() => runCommand(command)}
-            className="rounded-md border border-line bg-surface px-2.5 py-2 font-mono text-xs text-muted transition hover:border-accent hover:text-ink"
+            className="command-chip rounded-md border border-line bg-surface px-2.5 py-2 font-mono text-xs text-muted transition hover:border-accent hover:text-ink"
           >
             {command}
           </button>
@@ -631,7 +637,7 @@ function CommandConsole({
           <p className="font-mono text-xs leading-6 text-[#9c8542]">Console cleared.</p>
         ) : (
           history.map((entry) => (
-            <div key={entry.id} className="border-b border-[#3c3214] py-2 last:border-0">
+            <div key={entry.id} className="history-entry border-b border-[#3c3214] py-2 last:border-0">
               <p className="font-mono text-xs text-accent">$ {entry.command}</p>
               <p className="mt-1 text-sm leading-6 text-[#ffe69a]">{entry.response}</p>
             </div>
@@ -707,7 +713,7 @@ function ProofBlock({ label, value, strong = false }: { label: string; value: st
 
 function ContactLink({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href: string }) {
   return (
-    <a href={href} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noreferrer" : undefined} className="flex items-center gap-3 rounded-lg border border-line bg-card/92 p-4 text-ink transition hover:border-accent">
+    <a href={href} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noreferrer" : undefined} className="interactive-card flex items-center gap-3 rounded-lg border border-line bg-card/92 p-4 text-ink transition hover:border-accent">
       <span className="text-accent">{icon}</span>
       <span>
         <span className="block font-mono text-xs uppercase text-muted">{label}</span>
@@ -740,7 +746,7 @@ function InputField({
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-md border border-line bg-surface px-3 py-3 text-sm text-ink outline-none focus:border-accent"
+        className="input-glow mt-2 w-full rounded-md border border-line bg-surface px-3 py-3 text-sm text-ink outline-none focus:border-accent"
       />
     </div>
   );
