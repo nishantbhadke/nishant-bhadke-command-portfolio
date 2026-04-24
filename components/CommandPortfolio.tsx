@@ -87,6 +87,7 @@ export function CommandPortfolio() {
     }
   ]);
   const [dockMode, setDockMode] = useState<DockMode>("right");
+  const [isConsoleHeader, setIsConsoleHeader] = useState(false);
   const [contactFlow, setContactFlow] = useState<ContactFlow | null>(null);
   const [notice, setNotice] = useState("");
   const [composer, setComposer] = useState<ContactDraft>({ name: "", email: "", subject: "", message: "" });
@@ -115,6 +116,27 @@ export function CommandPortfolio() {
 
   useEffect(() => {
     inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    let ticking = false;
+
+    const updateConsoleMode = () => {
+      const shouldUseHeader = window.scrollY > 120;
+      setIsConsoleHeader((current) => (current === shouldUseHeader ? current : shouldUseHeader));
+      ticking = false;
+    };
+
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(updateConsoleMode);
+    };
+
+    updateConsoleMode();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   function addHistory(command: string, response: string) {
@@ -301,7 +323,9 @@ export function CommandPortfolio() {
 
   const selectedProject = projects[projectIndex];
   const shellClass =
-    dockMode === "right"
+    isConsoleHeader
+      ? "console-header-layout lg:grid-cols-1"
+      : dockMode === "right"
       ? "lg:grid-cols-[minmax(0,1fr)_410px]"
       : dockMode === "wide"
         ? "lg:grid-cols-1"
@@ -479,19 +503,30 @@ export function CommandPortfolio() {
 
         <aside
           className={`z-20 ${
-            dockMode === "right"
+            isConsoleHeader
+              ? "fixed inset-x-3 top-3 z-50 lg:inset-x-6"
+              : dockMode === "right"
               ? "lg:sticky lg:top-5 lg:h-[calc(100vh-40px)]"
               : dockMode === "bottom"
                 ? "fixed inset-x-3 bottom-3"
                 : "lg:order-first"
           }`}
         >
-          <div className={dockMode === "wide" ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]" : "grid gap-4"}>
+          <div
+            className={
+              isConsoleHeader
+                ? "mx-auto max-w-7xl"
+                : dockMode === "wide"
+                  ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]"
+                  : "grid gap-4"
+            }
+          >
             <CommandConsole
               activeSection={activeSection}
               contactFlow={contactFlow}
               dockMode={dockMode}
               history={history}
+              isHeaderMode={isConsoleHeader}
               input={input}
               inputRef={inputRef}
               outputRef={outputRef}
@@ -500,7 +535,7 @@ export function CommandPortfolio() {
               setInput={setInput}
               submitCommand={submitCommand}
             />
-            <Mascot dockMode={dockMode} />
+            {!isConsoleHeader && <Mascot dockMode={dockMode} />}
           </div>
         </aside>
       </div>
@@ -557,6 +592,7 @@ function CommandConsole({
   contactFlow,
   dockMode,
   history,
+  isHeaderMode,
   input,
   inputRef,
   outputRef,
@@ -569,6 +605,7 @@ function CommandConsole({
   contactFlow: ContactFlow | null;
   dockMode: DockMode;
   history: HistoryEntry[];
+  isHeaderMode: boolean;
   input: string;
   inputRef: React.RefObject<HTMLInputElement | null>;
   outputRef: React.RefObject<HTMLDivElement | null>;
@@ -578,6 +615,62 @@ function CommandConsole({
   submitCommand: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   const quickCommands = contactFlow ? ["cancel"] : ["about", "projects", "rbl-bcms", "skills", "contact", "download resume"];
+  const latestResponse = history.length > 0 ? history[history.length - 1].response : "Console cleared.";
+
+  const dockControls = (
+    <div className="flex rounded-md border border-line bg-surface p-1" aria-label="Console dock controls">
+      {(["right", "bottom", "wide"] as DockMode[]).map((mode) => (
+        <button
+          key={mode}
+          type="button"
+          onClick={() => setDockMode(mode)}
+          className={`dock-button rounded px-2 py-1 font-mono text-[0.68rem] uppercase ${dockMode === mode ? "bg-accent text-[#1b1609]" : "text-muted"}`}
+        >
+          {mode}
+        </button>
+      ))}
+    </div>
+  );
+
+  const commandForm = (className: string) => (
+    <form onSubmit={submitCommand} className={className}>
+      <div className="flex items-center gap-2">
+        <span className="shrink-0 font-mono text-sm font-bold text-accent">{promptFor(contactFlow)}</span>
+        <input
+          ref={inputRef}
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          className="min-w-0 flex-1 bg-transparent font-mono text-sm text-[#ffe69a] outline-none placeholder:text-[#9c8542]"
+          placeholder={contactFlow ? "type your answer" : "projects, search redis, contact"}
+          spellCheck={false}
+          autoComplete="off"
+        />
+        <span aria-hidden="true" className="console-cursor" />
+        <button type="submit" className="action-button rounded bg-accent px-3 py-2 text-xs font-black text-[#1b1609] transition hover:bg-accentSoft">
+          Run
+        </button>
+      </div>
+    </form>
+  );
+
+  if (isHeaderMode) {
+    return (
+      <div className="console-panel console-header rounded-xl border border-line bg-card/96 p-3 shadow-soft backdrop-blur-xl">
+        <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
+          <div className="flex items-center gap-2">
+            <Terminal size={18} className="text-accent" />
+            <div>
+              <p className="font-mono text-xs font-bold uppercase text-accent">Command console</p>
+              <p className="text-xs text-muted">header mode · active: {activeSection}</p>
+            </div>
+          </div>
+          {commandForm("console-screen rounded-md border border-line bg-[#141106] p-3")}
+          {dockControls}
+        </div>
+        <p className="mt-2 truncate font-mono text-[0.72rem] text-muted">last: {latestResponse}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="console-panel rounded-lg border border-line bg-card/96 p-4 shadow-soft backdrop-blur-xl">
@@ -589,37 +682,9 @@ function CommandConsole({
             <p className="text-xs text-muted">active: {activeSection}</p>
           </div>
         </div>
-        <div className="flex rounded-md border border-line bg-surface p-1" aria-label="Console dock controls">
-          {(["right", "bottom", "wide"] as DockMode[]).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setDockMode(mode)}
-              className={`dock-button rounded px-2 py-1 font-mono text-[0.68rem] uppercase ${dockMode === mode ? "bg-accent text-[#1b1609]" : "text-muted"}`}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
+        {dockControls}
       </div>
-      <form onSubmit={submitCommand} className="console-screen mt-4 rounded-md border border-line bg-[#141106] p-3">
-        <div className="flex items-center gap-2">
-          <span className="shrink-0 font-mono text-sm font-bold text-accent">{promptFor(contactFlow)}</span>
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            className="min-w-0 flex-1 bg-transparent font-mono text-sm text-[#ffe69a] outline-none placeholder:text-[#9c8542]"
-            placeholder={contactFlow ? "type your answer" : "projects, search redis, contact"}
-            spellCheck={false}
-            autoComplete="off"
-          />
-          <span aria-hidden="true" className="console-cursor" />
-          <button type="submit" className="action-button rounded bg-accent px-3 py-2 text-xs font-black text-[#1b1609] transition hover:bg-accentSoft">
-            Run
-          </button>
-        </div>
-      </form>
+      {commandForm("console-screen mt-4 rounded-md border border-line bg-[#141106] p-3")}
       <div className="mt-3 flex flex-wrap gap-2">
         {quickCommands.map((command) => (
           <button
