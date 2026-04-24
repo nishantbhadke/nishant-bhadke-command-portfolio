@@ -38,7 +38,7 @@ export function CommandInput({ input, setInput, runCommand }: CommandInputProps)
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
-              runCommand();
+              runCommand(input);
             }
           }}
           placeholder="about, projects, work, skills, search redis"
@@ -49,7 +49,7 @@ export function CommandInput({ input, setInput, runCommand }: CommandInputProps)
         />
         <button
           type="button"
-          onClick={() => runCommand()}
+          onClick={() => runCommand(input)}
           className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-bold text-card transition hover:brightness-95"
         >
           Run <Send size={14} />
