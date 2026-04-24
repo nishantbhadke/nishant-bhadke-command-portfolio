@@ -480,19 +480,22 @@ export function CommandPortfolio() {
                 : "lg:order-first"
           }`}
         >
-          <CommandConsole
-            activeSection={activeSection}
-            contactFlow={contactFlow}
-            dockMode={dockMode}
-            history={history}
-            input={input}
-            inputRef={inputRef}
-            outputRef={outputRef}
-            runCommand={runCommand}
-            setDockMode={setDockMode}
-            setInput={setInput}
-            submitCommand={submitCommand}
-          />
+          <div className={dockMode === "wide" ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]" : "grid gap-4"}>
+            <CommandConsole
+              activeSection={activeSection}
+              contactFlow={contactFlow}
+              dockMode={dockMode}
+              history={history}
+              input={input}
+              inputRef={inputRef}
+              outputRef={outputRef}
+              runCommand={runCommand}
+              setDockMode={setDockMode}
+              setInput={setInput}
+              submitCommand={submitCommand}
+            />
+            <Mascot dockMode={dockMode} />
+          </div>
         </aside>
       </div>
     </main>
@@ -512,14 +515,17 @@ function HeroSection({
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="min-h-[88vh] scroll-mt-6 py-8 sm:py-12"
+      className="site-reveal min-h-[88vh] scroll-mt-6 py-8 sm:py-12"
     >
-      <div className="grid min-h-[76vh] items-center gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid min-h-[76vh] items-center gap-8">
         <div>
-          <p className="font-mono text-sm font-bold uppercase text-accent">Hello, I am Nishant Bhadke</p>
-          <h1 className="mt-5 max-w-4xl text-4xl font-black leading-tight text-ink sm:text-6xl">
-            Backend engineer for banking workflows that cannot afford guesswork.
+          <p className="font-mono text-sm font-bold uppercase text-accent">Hello, I build backend systems for finance teams.</p>
+          <h1 className="mt-5 max-w-4xl text-5xl font-black leading-tight text-ink sm:text-7xl">
+            Nishant Bhadke
           </h1>
+          <p className="mt-4 max-w-3xl text-2xl font-black leading-snug text-ink sm:text-4xl">
+            .NET backend engineer for banking workflows, APIs, and SQL-heavy platforms.
+          </p>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-muted">{profile.intro}</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <button onClick={() => runCommand("projects")} className="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-3 text-sm font-black text-[#1b1609] transition hover:bg-accentSoft">
@@ -535,7 +541,6 @@ function HeroSection({
             <HeroStat icon={<MapPin size={18} />} label="Location" value={profile.location} />
           </div>
         </div>
-        <Mascot />
       </div>
     </motion.section>
   );
@@ -569,7 +574,7 @@ function CommandConsole({
   const quickCommands = contactFlow ? ["cancel"] : ["about", "projects", "rbl-bcms", "skills", "contact", "download resume"];
 
   return (
-    <div className="rounded-lg border border-line bg-card/96 p-4 shadow-soft backdrop-blur-xl">
+    <div className="console-panel rounded-lg border border-line bg-card/96 p-4 shadow-soft backdrop-blur-xl">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Terminal size={18} className="text-accent" />
@@ -591,7 +596,7 @@ function CommandConsole({
           ))}
         </div>
       </div>
-      <form onSubmit={submitCommand} className="mt-4 rounded-md border border-line bg-[#141106] p-3">
+      <form onSubmit={submitCommand} className="console-screen mt-4 rounded-md border border-line bg-[#141106] p-3">
         <div className="flex items-center gap-2">
           <span className="shrink-0 font-mono text-sm font-bold text-accent">{promptFor(contactFlow)}</span>
           <input
@@ -603,7 +608,8 @@ function CommandConsole({
             spellCheck={false}
             autoComplete="off"
           />
-          <button type="submit" className="rounded bg-accent px-3 py-2 text-xs font-black text-[#1b1609]">
+          <span aria-hidden="true" className="console-cursor" />
+          <button type="submit" className="rounded bg-accent px-3 py-2 text-xs font-black text-[#1b1609] transition hover:bg-accentSoft">
             Run
           </button>
         </div>
@@ -620,7 +626,7 @@ function CommandConsole({
           </button>
         ))}
       </div>
-      <div ref={outputRef} className="mt-4 max-h-[48vh] overflow-y-auto rounded-md border border-line bg-[#141106] p-3" role="log" aria-live="polite">
+      <div ref={outputRef} className="console-screen mt-4 max-h-[48vh] overflow-y-auto rounded-md border border-line bg-[#141106] p-3" role="log" aria-live="polite">
         {history.length === 0 ? (
           <p className="font-mono text-xs leading-6 text-[#9c8542]">Console cleared.</p>
         ) : (
@@ -640,22 +646,31 @@ function CommandConsole({
   );
 }
 
-function Mascot() {
+function Mascot({ dockMode }: { dockMode: DockMode }) {
+  const wrapperClass =
+    dockMode === "bottom"
+      ? "hidden lg:flex items-center gap-4 rounded-lg border border-line bg-card/96 p-3 shadow-soft backdrop-blur-xl"
+      : "mascot-card mx-auto w-full rounded-lg border border-line bg-card/92 p-4 shadow-soft";
+
   return (
-    <div className="mx-auto w-full max-w-xs rounded-lg border border-line bg-card/92 p-5 shadow-soft">
-      <div className="mx-auto w-44 rounded-lg border border-line bg-[#151107] p-4">
-        <div className="mx-auto h-5 w-24 rounded-t-full bg-accent" />
-        <div className="relative mx-auto mt-1 h-32 w-36 rounded-lg border-4 border-[#3b3318] bg-[#ffdb62]">
-          <div className="absolute left-5 top-8 h-5 w-5 rounded-full bg-[#191408]" />
-          <div className="absolute right-5 top-8 h-5 w-5 rounded-full bg-[#191408]" />
-          <div className="absolute left-1/2 top-16 h-3 w-16 -translate-x-1/2 rounded-full bg-[#191408]" />
-          <div className="absolute -left-4 top-10 h-8 w-3 rounded bg-accent" />
-          <div className="absolute -right-4 top-10 h-8 w-3 rounded bg-accent" />
+    <div className={wrapperClass}>
+      <div className={`${dockMode === "bottom" ? "w-20 shrink-0" : "mx-auto w-40"} rounded-lg border border-line bg-[#151107] p-3`}>
+        <div className="mx-auto h-4 w-20 rounded-t-full bg-accent" />
+        <div className={`${dockMode === "bottom" ? "h-16 w-16" : "h-28 w-32"} mascot-head relative mx-auto mt-1 rounded-lg border-4 border-[#3b3318] bg-[#ffdb62]`}>
+          <div className={`${dockMode === "bottom" ? "left-3 top-4 h-3 w-3" : "left-5 top-7 h-5 w-5"} absolute rounded-full bg-[#191408]`} />
+          <div className={`${dockMode === "bottom" ? "right-3 top-4 h-3 w-3" : "right-5 top-7 h-5 w-5"} absolute rounded-full bg-[#191408]`} />
+          <div className={`${dockMode === "bottom" ? "top-9 h-2 w-8" : "top-14 h-3 w-14"} absolute left-1/2 -translate-x-1/2 rounded-full bg-[#191408]`} />
+          {dockMode !== "bottom" && (
+            <>
+              <div className="absolute -left-4 top-9 h-8 w-3 rounded bg-accent" />
+              <div className="absolute -right-4 top-9 h-8 w-3 rounded bg-accent" />
+            </>
+          )}
         </div>
-        <div className="mx-auto mt-3 h-10 w-28 rounded-lg border border-line bg-command" />
+        {dockMode !== "bottom" && <div className="mx-auto mt-3 h-9 w-24 rounded-lg border border-line bg-command" />}
       </div>
-      <p className="mt-4 text-center font-mono text-xs leading-6 text-muted">
-        NishBot keeps the console tidy. He likes yellow alerts, readable logs, and APIs that return before coffee gets cold.
+      <p className={`${dockMode === "bottom" ? "text-left" : "mt-4 text-center"} font-mono text-xs leading-6 text-muted`}>
+        NishBot stays with the console now. He watches logs, nudges the prompt, and keeps the page from feeling too polished.
       </p>
     </div>
   );
@@ -663,7 +678,7 @@ function Mascot() {
 
 function SectionHeader({ eyebrow, title, copy }: { eyebrow: string; title: string; copy: string }) {
   return (
-    <div>
+    <div className="site-reveal">
       <p className="font-mono text-xs font-black uppercase text-accent">{eyebrow}</p>
       <h2 className="mt-2 max-w-4xl text-3xl font-black leading-tight text-ink sm:text-4xl">{title}</h2>
       <p className="mt-3 max-w-3xl text-base leading-7 text-muted">{copy}</p>
@@ -673,7 +688,7 @@ function SectionHeader({ eyebrow, title, copy }: { eyebrow: string; title: strin
 
 function HeroStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-line bg-card/90 p-4">
+    <div className="site-reveal rounded-lg border border-line bg-card/90 p-4 transition duration-300 hover:-translate-y-1 hover:border-accent">
       <div className="text-accent">{icon}</div>
       <p className="mt-3 font-mono text-xs uppercase text-muted">{label}</p>
       <p className="mt-1 text-sm font-black text-ink">{value}</p>
@@ -683,7 +698,7 @@ function HeroStat({ icon, label, value }: { icon: React.ReactNode; label: string
 
 function ProofBlock({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className={`rounded-lg border border-line p-4 ${strong ? "bg-accent text-[#1b1609]" : "bg-surface/82 text-muted"}`}>
+    <div className={`site-reveal rounded-lg border border-line p-4 transition duration-300 hover:-translate-y-1 ${strong ? "bg-accent text-[#1b1609]" : "bg-surface/82 text-muted"}`}>
       <p className={`font-mono text-xs font-black uppercase ${strong ? "text-[#3f3107]" : "text-accent"}`}>{label}</p>
       <p className="mt-2 text-sm font-semibold leading-7">{value}</p>
     </div>

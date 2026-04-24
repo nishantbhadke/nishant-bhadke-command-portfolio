@@ -30,6 +30,139 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.site-reveal {
+  animation: site-reveal 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.console-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.console-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgba(245, 189, 53, 0.08), transparent),
+    radial-gradient(circle at 20% 0%, rgba(255, 217, 102, 0.14), transparent 28%);
+  opacity: 0.72;
+  animation: console-flicker 4.8s steps(12, end) infinite;
+}
+
+.console-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.console-screen {
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 26px rgba(245, 189, 53, 0.06);
+}
+
+.console-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(rgba(255, 230, 154, 0.08) 1px, transparent 1px);
+  background-size: 100% 5px;
+  mix-blend-mode: screen;
+  opacity: 0.24;
+}
+
+.console-cursor {
+  width: 0.55rem;
+  height: 1.1rem;
+  border-radius: 2px;
+  background: #f5bd35;
+  box-shadow: 0 0 12px rgba(245, 189, 53, 0.55);
+  animation: cursor-pulse 1s steps(2, start) infinite;
+}
+
+.mascot-card {
+  animation: bot-float 4.5s ease-in-out infinite;
+}
+
+.mascot-head {
+  animation: bot-breathe 3.8s ease-in-out infinite;
+}
+
+@keyframes site-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes console-flicker {
+  0%,
+  100% {
+    opacity: 0.64;
+  }
+
+  11% {
+    opacity: 0.8;
+  }
+
+  17% {
+    opacity: 0.46;
+  }
+
+  19% {
+    opacity: 0.88;
+  }
+
+  52% {
+    opacity: 0.58;
+  }
+
+  54% {
+    opacity: 0.76;
+  }
+}
+
+@keyframes cursor-pulse {
+  0%,
+  48% {
+    opacity: 1;
+  }
+
+  49%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes bot-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes bot-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.025);
+  }
+}
+
 ::selection {
   background: #f5bd35;
   color: #161207;
