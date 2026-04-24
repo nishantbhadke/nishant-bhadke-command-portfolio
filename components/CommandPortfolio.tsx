@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowDown,
   BriefcaseBusiness,
@@ -122,8 +122,11 @@ export function CommandPortfolio() {
     let ticking = false;
 
     const updateConsoleMode = () => {
-      const shouldUseHeader = window.scrollY > 120;
-      setIsConsoleHeader((current) => (current === shouldUseHeader ? current : shouldUseHeader));
+      const scrollY = window.scrollY;
+      setIsConsoleHeader((current) => {
+        const shouldUseHeader = current ? scrollY > 64 : scrollY > 150;
+        return current === shouldUseHeader ? current : shouldUseHeader;
+      });
       ticking = false;
     };
 
@@ -501,8 +504,10 @@ export function CommandPortfolio() {
           </section>
         </div>
 
-        <aside
-          className={`z-20 ${
+        <motion.aside
+          layout
+          transition={{ type: "spring", stiffness: 260, damping: 32, mass: 0.8 }}
+          className={`console-dock-shell z-20 ${
             isConsoleHeader
               ? "fixed inset-x-3 top-3 z-50 lg:inset-x-6"
               : dockMode === "right"
@@ -535,9 +540,11 @@ export function CommandPortfolio() {
               setInput={setInput}
               submitCommand={submitCommand}
             />
-            {!isConsoleHeader && <Mascot dockMode={dockMode} />}
+            <AnimatePresence initial={false}>
+              {!isConsoleHeader && <Mascot dockMode={dockMode} />}
+            </AnimatePresence>
           </div>
-        </aside>
+        </motion.aside>
       </div>
     </main>
   );
@@ -655,7 +662,14 @@ function CommandConsole({
 
   if (isHeaderMode) {
     return (
-      <div className="console-panel console-header rounded-xl border border-line bg-card/96 p-3 shadow-soft backdrop-blur-xl">
+      <motion.div
+        layoutId="command-console-panel"
+        initial={{ opacity: 0, y: -18, scale: 0.985, filter: "blur(4px)" }}
+        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+        exit={{ opacity: 0, y: -10, scale: 0.985, filter: "blur(4px)" }}
+        transition={{ type: "spring", stiffness: 300, damping: 34, mass: 0.75 }}
+        className="console-panel console-header rounded-xl border border-line bg-card/96 p-3 shadow-soft backdrop-blur-xl"
+      >
         <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
           <div className="flex items-center gap-2">
             <Terminal size={18} className="text-accent" />
@@ -668,12 +682,19 @@ function CommandConsole({
           {dockControls}
         </div>
         <p className="mt-2 truncate font-mono text-[0.72rem] text-muted">last: {latestResponse}</p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="console-panel rounded-lg border border-line bg-card/96 p-4 shadow-soft backdrop-blur-xl">
+    <motion.div
+      layoutId="command-console-panel"
+      initial={{ opacity: 0, y: 14, scale: 0.99, filter: "blur(3px)" }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, y: 10, scale: 0.99, filter: "blur(3px)" }}
+      transition={{ type: "spring", stiffness: 280, damping: 32, mass: 0.8 }}
+      className="console-panel rounded-lg border border-line bg-card/96 p-4 shadow-soft backdrop-blur-xl"
+    >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Terminal size={18} className="text-accent" />
@@ -713,7 +734,7 @@ function CommandConsole({
         <Grip size={14} />
         <span>Dock it right, bottom, or wide. Every command scrolls to the result.</span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -724,7 +745,14 @@ function Mascot({ dockMode }: { dockMode: DockMode }) {
       : "mascot-card mx-auto w-full rounded-lg border border-line bg-card/92 p-4 shadow-soft";
 
   return (
-    <div className={wrapperClass}>
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 16, scale: 0.98, filter: "blur(4px)" }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, y: 12, scale: 0.96, filter: "blur(6px)" }}
+      transition={{ type: "spring", stiffness: 260, damping: 30, mass: 0.8 }}
+      className={wrapperClass}
+    >
       <div className={`${dockMode === "bottom" ? "w-20 shrink-0" : "mx-auto w-40"} rounded-lg border border-line bg-[#151107] p-3`}>
         <div className="mx-auto h-4 w-20 rounded-t-full bg-accent" />
         <div className={`${dockMode === "bottom" ? "h-16 w-16" : "h-28 w-32"} mascot-head relative mx-auto mt-1 rounded-lg border-4 border-[#3b3318] bg-[#ffdb62]`}>
@@ -743,7 +771,7 @@ function Mascot({ dockMode }: { dockMode: DockMode }) {
       <p className={`${dockMode === "bottom" ? "text-left" : "mt-4 text-center"} font-mono text-xs leading-6 text-muted`}>
         NishBot stays with the console now. He watches logs, nudges the prompt, and keeps the page from feeling too polished.
       </p>
-    </div>
+    </motion.div>
   );
 }
 
