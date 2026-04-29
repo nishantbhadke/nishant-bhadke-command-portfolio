@@ -123,7 +123,10 @@ export function CommandPortfolio() {
 
     const updateConsoleMode = () => {
       const scrollY = window.scrollY;
-      const nextProgress = Math.min(1, Math.max(0, (scrollY - 80) / 140));
+      const projectsTop = projectsRef.current?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
+      const scrollProgress = Math.min(1, Math.max(0, (scrollY - 80) / 140));
+      const sectionProgress = Math.min(1, Math.max(0, (window.innerHeight * 0.78 - projectsTop) / 180));
+      const nextProgress = Math.max(scrollProgress, sectionProgress);
       setConsoleHeaderProgress((current) => (Math.abs(current - nextProgress) < 0.015 ? current : nextProgress));
       ticking = false;
     };
@@ -325,12 +328,12 @@ export function CommandPortfolio() {
   const selectedProject = projects[projectIndex];
   const isConsoleHeader = consoleHeaderProgress > 0.92;
   const showFloatingConsole = consoleHeaderProgress > 0.02;
-  const shellClass =
-    dockMode === "right"
-      ? "lg:grid-cols-[minmax(0,1fr)_410px]"
-      : dockMode === "wide"
-        ? "lg:grid-cols-1"
-        : "lg:grid-cols-[minmax(0,1fr)]";
+  const layoutProgress = Math.min(1, Math.max(0, (consoleHeaderProgress - 0.35) / 0.65));
+  const shellClass = dockMode === "right" ? "portfolio-shell-right" : dockMode === "wide" ? "portfolio-shell-wide" : "portfolio-shell-bottom";
+  const shellStyle = {
+    "--console-col": `${Math.round(410 * (1 - layoutProgress))}px`,
+    "--console-gap": `${Math.round(24 * (1 - layoutProgress))}px`
+  } as React.CSSProperties;
 
   return (
     <main id="main-content" className="min-h-screen bg-paper text-ink">
@@ -346,7 +349,7 @@ export function CommandPortfolio() {
         }}
         aria-hidden={!showFloatingConsole}
       >
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-[92rem]">
           <CommandConsole
             activeSection={activeSection}
             contactFlow={contactFlow}
@@ -364,7 +367,7 @@ export function CommandPortfolio() {
         </div>
       </div>
 
-      <div className={`relative mx-auto grid w-full max-w-7xl gap-6 px-4 py-5 sm:px-6 lg:px-8 ${shellClass}`}>
+      <div className={`portfolio-shell ${shellClass} relative mx-auto grid w-full max-w-[92rem] px-4 py-5 sm:px-6 lg:px-8`} style={shellStyle}>
         <div className="grid min-w-0 gap-6">
           <HeroSection overviewRef={overviewRef} runCommand={runCommand} />
 
@@ -374,8 +377,8 @@ export function CommandPortfolio() {
               title="Projects that had business rules, deadlines, and people depending on them."
               copy="I kept this to five projects because a hiring manager should not need to dig through everything I have touched."
             />
-            <div className="mt-5 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-              <div className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:overflow-visible lg:pb-0">
+            <div className="project-showcase mt-5 grid gap-4">
+              <div className="project-rail flex gap-2 overflow-x-auto pb-1">
                 {projects.map((project, index) => (
                   <button
                     key={project.id}
@@ -406,7 +409,7 @@ export function CommandPortfolio() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="font-mono text-xs font-bold uppercase text-accent">{selectedProject.label}</p>
-                    <h2 className="mt-2 text-2xl font-black leading-tight text-ink sm:text-3xl">{selectedProject.title}</h2>
+                    <h2 className="mt-2 text-2xl font-black leading-tight text-ink sm:text-3xl xl:text-4xl">{selectedProject.title}</h2>
                     <p className="mt-2 font-mono text-xs uppercase text-muted">{selectedProject.duration}</p>
                   </div>
                   <span className="rounded-md border border-line bg-command px-3 py-2 font-mono text-xs text-muted">
@@ -414,7 +417,7 @@ export function CommandPortfolio() {
                   </span>
                 </div>
                 <p className="mt-5 text-base leading-8 text-muted">{selectedProject.summary}</p>
-                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <div className="mt-5 grid gap-3 xl:grid-cols-3">
                   <ProofBlock label="Problem" value={selectedProject.problem} />
                   <ProofBlock label="My part" value={selectedProject.contribution} />
                   <ProofBlock label="Result" value={selectedProject.impact} strong />
@@ -704,7 +707,7 @@ function CommandConsole({
             <Terminal size={18} className="text-accent" />
             <div>
               <p className="font-mono text-xs font-bold uppercase text-accent">Command console</p>
-              <p className="text-xs text-muted">header mode · active: {activeSection}</p>
+              <p className="text-xs text-muted">header mode / active: {activeSection}</p>
             </div>
           </div>
           {commandForm("console-screen rounded-md border border-line bg-[#141106] p-3")}

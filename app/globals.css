@@ -51,7 +51,43 @@ body {
   animation: site-reveal 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.portfolio-shell {
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .portfolio-shell-right {
+    gap: var(--console-gap, 1.5rem);
+    grid-template-columns: minmax(0, 1fr) minmax(0, var(--console-col, 410px));
+    transition:
+      gap 120ms linear,
+      grid-template-columns 120ms linear;
+  }
+
+  .portfolio-shell-wide,
+  .portfolio-shell-bottom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-showcase {
+    grid-template-columns: minmax(220px, 0.34fr) minmax(0, 1fr);
+  }
+
+  .project-rail {
+    display: grid;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+}
+
+@media (min-width: 1280px) {
+  .project-showcase {
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  }
+}
+
 .console-dock-shell {
+  min-width: 0;
   will-change: transform, opacity, filter;
   transition:
     filter 90ms linear,
@@ -95,6 +131,7 @@ body {
 }
 
 .section-shell {
+  scroll-margin-top: 7.5rem;
   animation: section-rise both;
   animation-timeline: view();
   animation-range: entry 0% cover 28%;
