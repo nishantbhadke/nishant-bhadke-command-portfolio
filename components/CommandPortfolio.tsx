@@ -614,7 +614,7 @@ function HeroSection({
           </div>
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             <HeroStat icon={<BriefcaseBusiness size={18} />} label="Role" value={profile.role} />
-            <HeroStat icon={<Wrench size={18} />} label="Core lane" value="APIs, SQL, BFSI flows" />
+            <HeroStat icon={<Wrench size={18} />} label="Engineering Focus" value=".NET / C# APIs, SQL Server, banking workflows" />
             <HeroStat icon={<MapPin size={18} />} label="Location" value={profile.location} />
           </div>
         </div>
