@@ -7,7 +7,7 @@ export const profile = {
   linkedin: "https://www.linkedin.com/in/nishant-bhadke-983837185/",
   resume: "Nishant_Bhadke_Resume.pdf",
   intro:
-    "I build backend systems for banks and finance teams: APIs, SQL-heavy workflows, Redis-backed performance fixes, document flows, and maker-checker journeys. I like work where the business rules are messy and the software still has to be calm.",
+    "I build & worked on backend systems for banks: APIs, SQL workflows, Redis performance fixes, document flows, and maker-checker approvals. I enjoy the work when rules are messy, deadlines are real, and the system still has to stay calm.",
   workedAcross: ["Winjit Technologies", "Suryoday Small Finance Bank", "City Union Bank", "RBL-BCMS Project", "RBL-RADC Project"],
   commands: [
     "help",

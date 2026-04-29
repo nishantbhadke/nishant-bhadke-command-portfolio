@@ -593,7 +593,7 @@ function HeroSection({
     >
       <div className="grid min-h-[76vh] items-center gap-8">
         <div>
-          <p className="font-mono text-sm font-bold uppercase text-accent">Hello, I build backend systems for finance teams.</p>
+          <p className="font-mono text-sm font-bold uppercase text-accent">Hello, I build & worked on backend systems for banks.</p>
           <h1 className="mt-5 max-w-4xl text-5xl font-black leading-tight text-ink sm:text-7xl">
             Nishant Bhadke
           </h1>
